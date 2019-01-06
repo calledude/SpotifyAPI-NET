@@ -28,11 +28,8 @@ namespace SpotifyAPI.Web.Models
         }
 
         [JsonProperty("error")]
-        public Error Error { get; set; }
 
         private ResponseInfo _info;
-
-        public bool HasError() => Error != null;
 
         internal void AddResponseInfo(ResponseInfo info) => _info = info;
 
