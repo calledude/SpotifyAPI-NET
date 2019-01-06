@@ -14,6 +14,7 @@ namespace SpotifyAPI.Web
     public sealed class SpotifyWebAPI : IDisposable
     {
         private readonly SpotifyWebBuilder _builder;
+        public event Action<Error> OnError;
 
         public SpotifyWebAPI() : this(null)
         {
@@ -21,6 +22,7 @@ namespace SpotifyAPI.Web
 
         public SpotifyWebAPI(ProxyConfig proxyConfig)
         {
+            BasicModel.OnError += PropagateErrorEvent;
             _builder = new SpotifyWebBuilder();
             UseAuth = true;
             WebClient = new SpotifyWebClient(proxyConfig)
@@ -34,8 +36,14 @@ namespace SpotifyAPI.Web
             };
         }
 
+        internal void PropagateErrorEvent(Error error)
+        {
+            OnError?.Invoke(error);
+        }
+
         public void Dispose()
         {
+            BasicModel.OnError -= PropagateErrorEvent;
             WebClient.Dispose();
             GC.SuppressFinalize(this);
         }

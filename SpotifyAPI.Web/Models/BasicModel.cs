@@ -7,6 +7,26 @@ namespace SpotifyAPI.Web.Models
 {
     public abstract class BasicModel
     {
+        internal static event Action<Error> OnError;
+        private Error error;
+
+        [JsonProperty("error")]
+        public Error Error
+        {
+            get
+            {
+                return error;
+            }
+            set
+            {
+                if (value != null)
+                {
+                    OnError?.Invoke(value);
+                }
+                error = value;
+            }
+        }
+
         [JsonProperty("error")]
         public Error Error { get; set; }
 
