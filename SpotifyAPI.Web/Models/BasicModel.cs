@@ -27,8 +27,6 @@ namespace SpotifyAPI.Web.Models
             }
         }
 
-        [JsonProperty("error")]
-
         private ResponseInfo _info;
 
         internal void AddResponseInfo(ResponseInfo info) => _info = info;
