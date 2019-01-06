@@ -63,7 +63,7 @@ namespace SpotifyAPI.Web.Auth
 
             return JsonConvert.DeserializeObject<Token>(msg);
         }
-        public async Task<Token> ExchangeCode(string code)
+        internal async Task<Token> ExchangeCode(string code)
         {
             List<KeyValuePair<string, string>> args = new List<KeyValuePair<string, string>>()
             {
