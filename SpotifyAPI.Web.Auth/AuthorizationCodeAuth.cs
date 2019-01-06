@@ -113,7 +113,7 @@ namespace SpotifyAPI.Web.Auth
 
             Task.Factory.StartNew(async () => auth?.TriggerAuth(await au.ExchangeCode(authcode.Code)));
 
-            return this.StringResponseAsync("OK - This window can be closed now");
+            return this.HtmlResponseAsync("<script>window.close()</script>");
         }
 
         [WebApiHandler(HttpVerbs.Post, "/")]
