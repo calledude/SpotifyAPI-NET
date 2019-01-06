@@ -16,9 +16,9 @@ using HttpListenerContext = Unosquare.Net.HttpListenerContext;
 
 namespace SpotifyAPI.Web.Auth
 {
-    public class ImplictGrantAuth : SpotifyAuthServer<Token>
+    public class ImplicitGrantAuth : SpotifyAuthServer<Token>
     {
-        public ImplictGrantAuth(string clientId, string redirectUri, string serverUri, Scope scope = Scope.None, string state = "") :
+        public ImplicitGrantAuth(string clientId, string redirectUri, string serverUri, Scope scope = Scope.None, string state = "") :
             base("token", "ImplicitGrantAuth", redirectUri, serverUri, scope, state)
         {
             ClientId = clientId;
@@ -36,7 +36,7 @@ namespace SpotifyAPI.Web.Auth
         public Task<bool> GetAuth()
         {
             string state = Request.QueryString["state"];
-            SpotifyAuthServer<Token> auth = ImplictGrantAuth.GetByState(state);
+            SpotifyAuthServer<Token> auth = ImplicitGrantAuth.GetByState(state);
             if (auth == null)
                 return this.StringResponseAsync(
                     $"Failed - Unable to find auth request with state \"{state}\" - Please retry");

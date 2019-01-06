@@ -11,22 +11,12 @@ using Unosquare.Labs.EmbedIO.Modules;
 
 namespace SpotifyAPI.Web.Auth
 {
-    public abstract class SpotifyAuthServer<T>
+    public abstract class SpotifyAuthServer<T> : Auth
     {
-        public string ClientId { get; set; }
-        public string ServerUri { get; set; }
-        public string RedirectUri { get; set; }
-        public string State { get; set; }
-        public Scope Scope { get; set; }
-        public bool ShowDialog { get; set; }
-
         private readonly string _folder;
         private readonly string _type;
         private WebServer _server;
         protected CancellationTokenSource _serverSource;
-
-        public delegate void OnAuthReceived(object sender, T payload);
-        public event OnAuthReceived AuthReceived;
 
         internal static readonly Dictionary<string, SpotifyAuthServer<T>> Instances = new Dictionary<string, SpotifyAuthServer<T>>();
 
@@ -40,7 +30,7 @@ namespace SpotifyAPI.Web.Auth
             State = string.IsNullOrEmpty(state) ? string.Join("", Guid.NewGuid().ToString("n").Take(8)) : state;
         }
 
-        public void Start()
+        public override void Start()
         {
             Instances.Add(State, this);
             _serverSource = new CancellationTokenSource();
@@ -66,24 +56,19 @@ namespace SpotifyAPI.Web.Auth
             return Uri.EscapeUriString(builder.ToString());
         }
 
-        public void Stop(int delay = 2000)
+        public override void Stop(int delay = 2000)
         {
             if (_serverSource == null) return;
             _serverSource.CancelAfter(delay);
             Instances.Remove(State);
         }
 
-        public void OpenBrowser()
+        public override void OpenBrowser()
         {
             string uri = GetUri();
             AuthUtil.OpenBrowser(uri);
         }
-
-        internal void TriggerAuth(T payload)
-        {
-            AuthReceived?.Invoke(this, payload);
-        }
-
+        
         internal static SpotifyAuthServer<T> GetByState(string state)
         {
             return Instances.TryGetValue(state, out SpotifyAuthServer<T> auth) ? auth : null;
