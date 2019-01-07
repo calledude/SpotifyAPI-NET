@@ -15,6 +15,8 @@ namespace SpotifyAPI.Web.Auth
 {
     public class AuthorizationCodeAuth : SpotifyAuthServer<AuthorizationCode>
     {
+        public string SecretId { get; set; }
+
         public AuthorizationCodeAuth(string redirectUri, string serverUri, Scope scope = Scope.None, string state = "")
             : base("code", "AuthorizationCodeAuth", redirectUri, serverUri, scope, state)
         {

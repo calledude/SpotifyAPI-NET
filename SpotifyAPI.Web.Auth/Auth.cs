@@ -11,7 +11,6 @@ namespace SpotifyAPI.Web.Auth
         public string State { get; set; }
         public Scope Scope { get; set; }
         public bool ShowDialog { get; set; }
-        public string SecretId { get; set; }
         public abstract void Start();
         public abstract void Stop(int delay = 2000);
         public abstract void OpenBrowser();
