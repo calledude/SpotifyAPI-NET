@@ -15,8 +15,6 @@ namespace SpotifyAPI.Web.Auth
 {
     public class AuthorizationCodeAuth : SpotifyAuthServer<AuthorizationCode>
     {
-        public string SecretId { get; set; }
-
         public AuthorizationCodeAuth(string redirectUri, string serverUri, Scope scope = Scope.None, string state = "")
             : base("code", "AuthorizationCodeAuth", redirectUri, serverUri, scope, state)
         {
@@ -61,7 +59,10 @@ namespace SpotifyAPI.Web.Auth
             HttpResponseMessage resp = await client.PostAsync("https://accounts.spotify.com/api/token", content);
             string msg = await resp.Content.ReadAsStringAsync();
 
-            return JsonConvert.DeserializeObject<Token>(msg);
+            Token t = JsonConvert.DeserializeObject<Token>(msg);
+            t.RefreshToken = t.RefreshToken ?? refreshToken;
+
+            return t;
         }
         internal async Task<Token> ExchangeCode(string code)
         {
