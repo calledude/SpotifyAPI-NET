@@ -8,6 +8,7 @@ using SpotifyAPI.Web.Enums;
 using Unosquare.Labs.EmbedIO;
 using Unosquare.Labs.EmbedIO.Constants;
 using Unosquare.Labs.EmbedIO.Modules;
+using Unosquare.Swan;
 
 namespace SpotifyAPI.Web.Auth
 {
@@ -32,6 +33,7 @@ namespace SpotifyAPI.Web.Auth
 
         public override void Start()
         {
+            Terminal.Settings.DisplayLoggingMessageType = LogMessageType.None;
             Instances.Add(State, this);
             _serverSource = new CancellationTokenSource();
 
