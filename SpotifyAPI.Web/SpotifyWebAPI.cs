@@ -50,15 +50,8 @@ namespace SpotifyAPI.Web
 
         #region Configuration
 
-        /// <summary>
-        ///     The type of the <see cref="AccessToken"/>
-        /// </summary>
-        public string TokenType { get; set; }
 
-        /// <summary>
-        ///     A valid token issued by spotify. Used only when <see cref="UseAuth"/> is true
-        /// </summary>
-        public string AccessToken { get; set; }
+        public Token Token { get; set; }
 
         /// <summary>
         ///     If true, an authorization header based on <see cref="TokenType"/> and <see cref="AccessToken"/> will be used
@@ -2390,7 +2383,7 @@ namespace SpotifyAPI.Web
             {
                 Dictionary<string, string> headers = new Dictionary<string, string>
                 {
-                    { "Authorization", TokenType + " " + AccessToken},
+                    { "Authorization", Token.TokenType + " " + Token.AccessToken},
                     { "Content-Type", "application/json" }
                 };
 
@@ -2419,7 +2412,7 @@ namespace SpotifyAPI.Web
             {
                 Dictionary<string, string> headers = new Dictionary<string, string>
                 {
-                    { "Authorization", TokenType + " " + AccessToken},
+                    { "Authorization", Token.TokenType + " " + Token.AccessToken},
                     { "Content-Type", "application/json" }
                 };
 
@@ -2519,7 +2512,7 @@ namespace SpotifyAPI.Web
         {
             Dictionary<string, string> headers = new Dictionary<string, string>();
             if (UseAuth)
-                headers.Add("Authorization", TokenType + " " + AccessToken);
+                headers.Add("Authorization", Token.TokenType + " " + Token.AccessToken);
             return WebClient.DownloadJson<T>(url, headers);
         }
 
@@ -2527,7 +2520,7 @@ namespace SpotifyAPI.Web
         {
             Dictionary<string, string> headers = new Dictionary<string, string>();
             if (UseAuth)
-                headers.Add("Authorization", TokenType + " " + AccessToken);
+                headers.Add("Authorization", Token.TokenType + " " + Token.AccessToken);
             return WebClient.DownloadJsonAsync<T>(url, headers);
         }
 
