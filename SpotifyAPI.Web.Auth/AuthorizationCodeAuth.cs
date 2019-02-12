@@ -17,9 +17,15 @@ namespace SpotifyAPI.Web.Auth
     {
         public string SecretId { get; set; }
 
-        public AuthorizationCodeAuth(string redirectUri, string serverUri, Scope scope = Scope.None, string state = "")
+        private AuthorizationCodeAuth(string redirectUri, string serverUri, Scope scope = Scope.None, string state = "")
             : base("code", "AuthorizationCodeAuth", redirectUri, serverUri, scope, state)
         {
+        }
+
+        public AuthorizationCodeAuth(string clientId, string redirectUri, string serverUri, Scope scope = Scope.None, string state = "")
+            : this(redirectUri, serverUri, scope, state)
+        {
+            ClientId = clientId;
         }
 
         public AuthorizationCodeAuth(string clientId, string secretId, string redirectUri, string serverUri, Scope scope = Scope.None, string state = "")
@@ -54,18 +60,22 @@ namespace SpotifyAPI.Web.Auth
                 new KeyValuePair<string, string>("refresh_token", refreshToken)
             };
 
-            HttpClient client = new HttpClient();
-            client.DefaultRequestHeaders.Add("Authorization", GetAuthHeader());
-            HttpContent content = new FormUrlEncodedContent(args);
+            using (HttpClient client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Add("Authorization", GetAuthHeader());
+                using (HttpContent content = new FormUrlEncodedContent(args))
+                using (HttpResponseMessage resp = await client.PostAsync("https://accounts.spotify.com/api/token", content))
+                {
+                    string msg = await resp.Content.ReadAsStringAsync();
 
-            HttpResponseMessage resp = await client.PostAsync("https://accounts.spotify.com/api/token", content);
-            string msg = await resp.Content.ReadAsStringAsync();
+                    Token t = JsonConvert.DeserializeObject<Token>(msg);
+                    t.RefreshToken = t.RefreshToken ?? refreshToken;
 
-            Token t = JsonConvert.DeserializeObject<Token>(msg);
-            t.RefreshToken = t.RefreshToken ?? refreshToken;
-
-            return t;
+                    return t;
+                }
+            }
         }
+
         internal async Task<Token> ExchangeCode(string code)
         {
             List<KeyValuePair<string, string>> args = new List<KeyValuePair<string, string>>()
