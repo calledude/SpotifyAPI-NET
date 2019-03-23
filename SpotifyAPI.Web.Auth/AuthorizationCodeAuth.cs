@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -54,7 +53,7 @@ namespace SpotifyAPI.Web.Auth
 
         public async Task<Token> RefreshToken(string refreshToken)
         {
-            List<KeyValuePair<string, string>> args = new List<KeyValuePair<string, string>>()
+            List<KeyValuePair<string, string>> args = new List<KeyValuePair<string, string>>
             {
                 new KeyValuePair<string, string>("grant_type", "refresh_token"),
                 new KeyValuePair<string, string>("refresh_token", refreshToken)
@@ -78,7 +77,7 @@ namespace SpotifyAPI.Web.Auth
 
         internal async Task<Token> ExchangeCode(string code)
         {
-            List<KeyValuePair<string, string>> args = new List<KeyValuePair<string, string>>()
+            List<KeyValuePair<string, string>> args = new List<KeyValuePair<string, string>>
             {
                 new KeyValuePair<string, string>("grant_type", "authorization_code"),
                 new KeyValuePair<string, string>("code", code),
@@ -130,9 +129,9 @@ namespace SpotifyAPI.Web.Auth
         }
 
         [WebApiHandler(HttpVerbs.Post, "/")]
-        public bool PostValues()
+        public async Task<bool> PostValues()
         {
-            Dictionary<string, object> formParams = this.RequestFormDataDictionary();
+            Dictionary<string, object> formParams = await this.RequestFormDataDictionaryAsync();
 
             string state = (string) formParams["state"];
             AuthorizationCodeAuth.Instances.TryGetValue(state, out SpotifyAuthServer<AuthorizationCode> authServer);

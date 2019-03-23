@@ -5,6 +5,7 @@ using SpotifyAPI.Web.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -119,6 +120,36 @@ namespace SpotifyAPI.Web
         public Task<SearchItem> SearchItemsAsync(string q, SearchType type, int limit = 20, int offset = 0, string market = "")
         {
             return DownloadDataAsync<SearchItem>(_builder.SearchItems(q, type, limit, offset, market));
+        }
+        
+        /// <summary>
+        ///     Get Spotify catalog information about artists, albums, tracks or playlists that match a keyword string.
+        /// </summary>
+        /// <param name="q">The search query's keywords (and optional field filters and operators), for example q=roadhouse+blues. (properly escaped)</param>
+        /// <param name="type">A list of item types to search across.</param>
+        /// <param name="limit">The maximum number of items to return. Default: 20. Minimum: 1. Maximum: 50.</param>
+        /// <param name="offset">The index of the first result to return. Default: 0</param>
+        /// <param name="market">An ISO 3166-1 alpha-2 country code or the string from_token.</param>
+        /// <returns></returns>
+        public SearchItem SearchItemsEscaped(string q, SearchType type, int limit = 20, int offset = 0, string market = "")
+        {
+            string escapedQuery = WebUtility.UrlEncode(q);
+            return DownloadData<SearchItem>(_builder.SearchItems(escapedQuery, type, limit, offset, market));
+        }
+
+        /// <summary>
+        ///     Get Spotify catalog information about artists, albums, tracks or playlists that match a keyword string asynchronously.
+        /// </summary>
+        /// <param name="q">The search query's keywords (and optional field filters and operators), for example q=roadhouse+blues. (properly escaped)</param>
+        /// <param name="type">A list of item types to search across.</param>
+        /// <param name="limit">The maximum number of items to return. Default: 20. Minimum: 1. Maximum: 50.</param>
+        /// <param name="offset">The index of the first result to return. Default: 0</param>
+        /// <param name="market">An ISO 3166-1 alpha-2 country code or the string from_token.</param>
+        /// <returns></returns>
+        public Task<SearchItem> SearchItemsEscapedAsync(string q, SearchType type, int limit = 20, int offset = 0, string market = "")
+        {
+            string escapedQuery = WebUtility.UrlEncode(q);
+            return DownloadDataAsync<SearchItem>(_builder.SearchItems(escapedQuery, type, limit, offset, market));
         }
 
         #endregion Search
@@ -648,8 +679,8 @@ namespace SpotifyAPI.Web
             {
                 {"ids", new JArray(ids)}
             };
-            return (await UploadDataAsync<ErrorResponse>(_builder.Follow(followType),
-                    ob.ToString(Formatting.None), "PUT").ConfigureAwait(false)) ?? new ErrorResponse();
+            return await UploadDataAsync<ErrorResponse>(_builder.Follow(followType),
+                       ob.ToString(Formatting.None), "PUT").ConfigureAwait(false) ?? new ErrorResponse();
         }
 
         /// <summary>
@@ -705,7 +736,7 @@ namespace SpotifyAPI.Web
             {
                 {"ids", new JArray(ids)}
             };
-            return (await UploadDataAsync<ErrorResponse>(_builder.Unfollow(followType), ob.ToString(Formatting.None), "DELETE").ConfigureAwait(false)) ?? new ErrorResponse();
+            return await UploadDataAsync<ErrorResponse>(_builder.Unfollow(followType), ob.ToString(Formatting.None), "DELETE").ConfigureAwait(false) ?? new ErrorResponse();
         }
 
         /// <summary>
@@ -744,7 +775,7 @@ namespace SpotifyAPI.Web
             if (!UseAuth)
                 throw new InvalidOperationException("Auth is required for IsFollowing");
 
-            var url = _builder.IsFollowing(followType, ids);
+            string url = _builder.IsFollowing(followType, ids);
             return DownloadList<bool>(url);
         }
 
@@ -762,7 +793,7 @@ namespace SpotifyAPI.Web
             if (!UseAuth)
                 throw new InvalidOperationException("Auth is required for IsFollowing");
 
-            var url = _builder.IsFollowing(followType, ids);
+            string url = _builder.IsFollowing(followType, ids);
             return DownloadListAsync<bool>(url);
         }
 
@@ -873,7 +904,7 @@ namespace SpotifyAPI.Web
             if (!UseAuth)
                 throw new InvalidOperationException("Auth is required for IsFollowingPlaylist");
 
-            var url = _builder.IsFollowingPlaylist(ownerId, playlistId, ids);
+            string url = _builder.IsFollowingPlaylist(ownerId, playlistId, ids);
             return DownloadList<bool>(url);
         }
 
@@ -890,7 +921,7 @@ namespace SpotifyAPI.Web
             if (!UseAuth)
                 throw new InvalidOperationException("Auth is required for IsFollowingPlaylist");
 
-            var url = _builder.IsFollowingPlaylist(ownerId, playlistId, ids);
+            string url = _builder.IsFollowingPlaylist(ownerId, playlistId, ids);
             return DownloadListAsync<bool>(url);
         }
 
@@ -945,7 +976,7 @@ namespace SpotifyAPI.Web
         public async Task<ErrorResponse> SaveTracksAsync(List<string> ids)
         {
             JArray array = new JArray(ids);
-            return (await UploadDataAsync<ErrorResponse>(_builder.SaveTracks(), array.ToString(Formatting.None), "PUT").ConfigureAwait(false)) ?? new ErrorResponse();
+            return await UploadDataAsync<ErrorResponse>(_builder.SaveTracks(), array.ToString(Formatting.None), "PUT").ConfigureAwait(false) ?? new ErrorResponse();
         }
 
         /// <summary>
@@ -1021,7 +1052,7 @@ namespace SpotifyAPI.Web
         public async Task<ErrorResponse> RemoveSavedTracksAsync(List<string> ids)
         {
             JArray array = new JArray(ids);
-            return (await UploadDataAsync<ErrorResponse>(_builder.RemoveSavedTracks(), array.ToString(Formatting.None), "DELETE").ConfigureAwait(false)) ?? new ErrorResponse();
+            return await UploadDataAsync<ErrorResponse>(_builder.RemoveSavedTracks(), array.ToString(Formatting.None), "DELETE").ConfigureAwait(false) ?? new ErrorResponse();
         }
 
         /// <summary>
@@ -1035,7 +1066,7 @@ namespace SpotifyAPI.Web
             if (!UseAuth)
                 throw new InvalidOperationException("Auth is required for CheckSavedTracks");
 
-            var url = _builder.CheckSavedTracks(ids);
+            string url = _builder.CheckSavedTracks(ids);
             return DownloadList<bool>(url);
         }
 
@@ -1049,7 +1080,7 @@ namespace SpotifyAPI.Web
         {
             if (!UseAuth)
                 throw new InvalidOperationException("Auth is required for CheckSavedTracks");
-            var url = _builder.CheckSavedTracks(ids);
+            string url = _builder.CheckSavedTracks(ids);
             return DownloadListAsync<bool>(url);
         }
 
@@ -1074,7 +1105,7 @@ namespace SpotifyAPI.Web
         public async Task<ErrorResponse> SaveAlbumsAsync(List<string> ids)
         {
             JArray array = new JArray(ids);
-            return (await UploadDataAsync<ErrorResponse>(_builder.SaveAlbums(), array.ToString(Formatting.None), "PUT").ConfigureAwait(false)) ?? new ErrorResponse();
+            return await UploadDataAsync<ErrorResponse>(_builder.SaveAlbums(), array.ToString(Formatting.None), "PUT").ConfigureAwait(false) ?? new ErrorResponse();
         }
 
         /// <summary>
@@ -1150,7 +1181,7 @@ namespace SpotifyAPI.Web
         public async Task<ErrorResponse> RemoveSavedAlbumsAsync(List<string> ids)
         {
             JArray array = new JArray(ids);
-            return (await UploadDataAsync<ErrorResponse>(_builder.RemoveSavedAlbums(), array.ToString(Formatting.None), "DELETE").ConfigureAwait(false)) ?? new ErrorResponse();
+            return await UploadDataAsync<ErrorResponse>(_builder.RemoveSavedAlbums(), array.ToString(Formatting.None), "DELETE").ConfigureAwait(false) ?? new ErrorResponse();
         }
 
         /// <summary>
@@ -1164,7 +1195,7 @@ namespace SpotifyAPI.Web
             if (!UseAuth)
                 throw new InvalidOperationException("Auth is required for CheckSavedTracks");
 
-            var url = _builder.CheckSavedAlbums(ids);
+            string url = _builder.CheckSavedAlbums(ids);
             return DownloadList<bool>(url);
         }
 
@@ -1178,7 +1209,7 @@ namespace SpotifyAPI.Web
         {
             if (!UseAuth)
                 throw new InvalidOperationException("Auth is required for CheckSavedAlbumsAsync");
-            var url = _builder.CheckSavedAlbums(ids);
+            string url = _builder.CheckSavedAlbums(ids);
             return DownloadListAsync<bool>(url);
         }
 
@@ -1320,11 +1351,30 @@ namespace SpotifyAPI.Web
         /// <param name="market">An ISO 3166-1 alpha-2 country code. Provide this parameter if you want to apply Track Relinking.</param>
         /// <returns></returns>
         /// <remarks>AUTH NEEDED</remarks>
+        [Obsolete("Calling GetPlaylist with a userId is deprecated, remove the parameter")]
         public FullPlaylist GetPlaylist(string userId, string playlistId, string fields = "", string market = "")
         {
             if (!UseAuth)
                 throw new InvalidOperationException("Auth is required for GetPlaylist");
             return DownloadData<FullPlaylist>(_builder.GetPlaylist(userId, playlistId, fields, market));
+        }
+
+        /// <summary>
+        ///     Get a playlist owned by a Spotify user.
+        /// </summary>
+        /// <param name="playlistId">The Spotify ID for the playlist.</param>
+        /// <param name="fields">
+        ///     Filters for the query: a comma-separated list of the fields to return. If omitted, all fields are
+        ///     returned.
+        /// </param>
+        /// <param name="market">An ISO 3166-1 alpha-2 country code. Provide this parameter if you want to apply Track Relinking.</param>
+        /// <returns></returns>
+        /// <remarks>AUTH NEEDED</remarks>
+        public FullPlaylist GetPlaylist(string playlistId, string fields = "", string market = "")
+        {
+            if (!UseAuth)
+                throw new InvalidOperationException("Auth is required for GetPlaylist");
+            return DownloadData<FullPlaylist>(_builder.GetPlaylist(playlistId, fields, market));
         }
 
         /// <summary>
@@ -1339,11 +1389,30 @@ namespace SpotifyAPI.Web
         /// <param name="market">An ISO 3166-1 alpha-2 country code. Provide this parameter if you want to apply Track Relinking.</param>
         /// <returns></returns>
         /// <remarks>AUTH NEEDED</remarks>
+        [Obsolete("Calling GetPlaylist with a userId is deprecated, remove the parameter")]
         public Task<FullPlaylist> GetPlaylistAsync(string userId, string playlistId, string fields = "", string market = "")
         {
             if (!UseAuth)
                 throw new InvalidOperationException("Auth is required for GetPlaylist");
             return DownloadDataAsync<FullPlaylist>(_builder.GetPlaylist(userId, playlistId, fields, market));
+        }
+
+        /// <summary>
+        ///     Get a playlist owned by a Spotify user asynchronously.
+        /// </summary>
+        /// <param name="playlistId">The Spotify ID for the playlist.</param>
+        /// <param name="fields">
+        ///     Filters for the query: a comma-separated list of the fields to return. If omitted, all fields are
+        ///     returned.
+        /// </param>
+        /// <param name="market">An ISO 3166-1 alpha-2 country code. Provide this parameter if you want to apply Track Relinking.</param>
+        /// <returns></returns>
+        /// <remarks>AUTH NEEDED</remarks>
+        public Task<FullPlaylist> GetPlaylistAsync(string playlistId, string fields = "", string market = "")
+        {
+            if (!UseAuth)
+                throw new InvalidOperationException("Auth is required for GetPlaylist");
+            return DownloadDataAsync<FullPlaylist>(_builder.GetPlaylist(playlistId, fields, market));
         }
 
         /// <summary>
@@ -1360,11 +1429,32 @@ namespace SpotifyAPI.Web
         /// <param name="market">An ISO 3166-1 alpha-2 country code. Provide this parameter if you want to apply Track Relinking.</param>
         /// <returns></returns>
         /// <remarks>AUTH NEEDED</remarks>
+        [Obsolete("Calling GetPlaylistTracks with a userId is deprecated, remove the parameter")]
         public Paging<PlaylistTrack> GetPlaylistTracks(string userId, string playlistId, string fields = "", int limit = 100, int offset = 0, string market = "")
         {
             if (!UseAuth)
                 throw new InvalidOperationException("Auth is required for GetPlaylistTracks");
             return DownloadData<Paging<PlaylistTrack>>(_builder.GetPlaylistTracks(userId, playlistId, fields, limit, offset, market));
+        }
+
+        /// <summary>
+        ///     Get full details of the tracks of a playlist owned by a Spotify user.
+        /// </summary>
+        /// <param name="playlistId">The Spotify ID for the playlist.</param>
+        /// <param name="fields">
+        ///     Filters for the query: a comma-separated list of the fields to return. If omitted, all fields are
+        ///     returned.
+        /// </param>
+        /// <param name="limit">The maximum number of tracks to return. Default: 100. Minimum: 1. Maximum: 100.</param>
+        /// <param name="offset">The index of the first object to return. Default: 0 (i.e., the first object)</param>
+        /// <param name="market">An ISO 3166-1 alpha-2 country code. Provide this parameter if you want to apply Track Relinking.</param>
+        /// <returns></returns>
+        /// <remarks>AUTH NEEDED</remarks>
+        public Paging<PlaylistTrack> GetPlaylistTracks(string playlistId, string fields = "", int limit = 100, int offset = 0, string market = "")
+        {
+            if (!UseAuth)
+                throw new InvalidOperationException("Auth is required for GetPlaylistTracks");
+            return DownloadData<Paging<PlaylistTrack>>(_builder.GetPlaylistTracks(playlistId, fields, limit, offset, market));
         }
 
         /// <summary>
@@ -1381,11 +1471,33 @@ namespace SpotifyAPI.Web
         /// <param name="market">An ISO 3166-1 alpha-2 country code. Provide this parameter if you want to apply Track Relinking.</param>
         /// <returns></returns>
         /// <remarks>AUTH NEEDED</remarks>
+        [Obsolete("Calling GetPlaylistTracks with a userId is deprecated, remove the parameter")]
         public Task<Paging<PlaylistTrack>> GetPlaylistTracksAsync(string userId, string playlistId, string fields = "", int limit = 100, int offset = 0, string market = "")
         {
             if (!UseAuth)
                 throw new InvalidOperationException("Auth is required for GetPlaylistTracks");
             return DownloadDataAsync<Paging<PlaylistTrack>>(_builder.GetPlaylistTracks(userId, playlistId, fields, limit, offset, market));
+        }
+
+        /// <summary>
+        ///     Get full details of the tracks of a playlist owned by a Spotify user asyncronously.
+        /// </summary>
+        /// <param name="playlistId">The Spotify ID for the playlist.</param>
+        /// <param name="fields">
+        ///     Filters for the query: a comma-separated list of the fields to return. If omitted, all fields are
+        ///     returned.
+        /// </param>
+        /// <param name="limit">The maximum number of tracks to return. Default: 100. Minimum: 1. Maximum: 100.</param>
+        /// <param name="offset">The index of the first object to return. Default: 0 (i.e., the first object)</param>
+        /// <param name="market">An ISO 3166-1 alpha-2 country code. Provide this parameter if you want to apply Track Relinking.</param>
+        /// <returns></returns>
+        /// <remarks>AUTH NEEDED</remarks>
+        [Obsolete("Calling GetPlaylistTracks with a userId is deprecated, remove the parameter")]
+        public Task<Paging<PlaylistTrack>> GetPlaylistTracksAsync(string playlistId, string fields = "", int limit = 100, int offset = 0, string market = "")
+        {
+            if (!UseAuth)
+                throw new InvalidOperationException("Auth is required for GetPlaylistTracks");
+            return DownloadDataAsync<Paging<PlaylistTrack>>(_builder.GetPlaylistTracks(playlistId, fields, limit, offset, market));
         }
 
         /// <summary>
@@ -1458,6 +1570,7 @@ namespace SpotifyAPI.Web
         /// <param name="newDescription">Value for playlist description as displayed in Spotify Clients and in the Web API.</param>
         /// <returns></returns>
         /// <remarks>AUTH NEEDED</remarks>
+        [Obsolete("Calling UpdatePlaylist with a userId is deprecated, remove the parameter")]
         public ErrorResponse UpdatePlaylist(string userId, string playlistId, string newName = null, bool? newPublic = null, bool? newCollaborative = null, string newDescription = null)
         {
             JObject body = new JObject();
@@ -1473,6 +1586,31 @@ namespace SpotifyAPI.Web
         }
 
         /// <summary>
+        ///     Change a playlist’s name and public/private state. (The user must, of course, own the playlist.)
+        /// </summary>
+        /// <param name="playlistId">The Spotify ID for the playlist.</param>
+        /// <param name="newName">The new name for the playlist, for example "My New Playlist Title".</param>
+        /// <param name="newPublic">If true the playlist will be public, if false it will be private.</param>
+        /// <param name="newCollaborative">If true the playlist will become collaborative and other users will be able to modify the playlist in their Spotify client.
+        /// Note: You can only set collaborative to true on non-public playlists.</param>
+        /// <param name="newDescription">Value for playlist description as displayed in Spotify Clients and in the Web API.</param>
+        /// <returns></returns>
+        /// <remarks>AUTH NEEDED</remarks>
+        public ErrorResponse UpdatePlaylist(string playlistId, string newName = null, bool? newPublic = null, bool? newCollaborative = null, string newDescription = null)
+        {
+            JObject body = new JObject();
+            if (newName != null)
+                body.Add("name", newName);
+            if (newPublic != null)
+                body.Add("public", newPublic);
+            if (newCollaborative != null)
+                body.Add("collaborative", newCollaborative);
+            if (newDescription != null)
+                body.Add("description", newDescription);
+            return UploadData<ErrorResponse>(_builder.UpdatePlaylist(playlistId), body.ToString(Formatting.None), "PUT") ?? new ErrorResponse();
+        }
+
+        /// <summary>
         ///     Change a playlist’s name and public/private state asynchronously. (The user must, of course, own the playlist.)
         /// </summary>
         /// <param name="userId">The user's Spotify user ID.</param>
@@ -1483,6 +1621,7 @@ namespace SpotifyAPI.Web
         /// <param name="newDescription">Value for playlist description as displayed in Spotify Clients and in the Web API.</param>
         /// <returns></returns>
         /// <remarks>AUTH NEEDED</remarks>
+        [Obsolete("Calling UpdatePlaylist with a userId is deprecated, remove the parameter")]
         public async Task<ErrorResponse> UpdatePlaylistAsync(string userId, string playlistId, string newName = null, bool? newPublic = null, bool? newCollaborative = null, string newDescription = null)
         {
             JObject body = new JObject();
@@ -1494,7 +1633,82 @@ namespace SpotifyAPI.Web
                 body.Add("collaborative", newCollaborative);
             if (newDescription != null)
                 body.Add("description", newDescription);
-            return (await UploadDataAsync<ErrorResponse>(_builder.UpdatePlaylist(userId, playlistId), body.ToString(Formatting.None), "PUT").ConfigureAwait(false)) ?? new ErrorResponse();
+            return await UploadDataAsync<ErrorResponse>(_builder.UpdatePlaylist(userId, playlistId), body.ToString(Formatting.None), "PUT").ConfigureAwait(false) ?? new ErrorResponse();
+        }
+        
+        /// <summary>
+        ///     Change a playlist’s name and public/private state asynchronously. (The user must, of course, own the playlist.)
+        /// </summary>
+        /// <param name="playlistId">The Spotify ID for the playlist.</param>
+        /// <param name="newName">The new name for the playlist, for example "My New Playlist Title".</param>
+        /// <param name="newPublic">If true the playlist will be public, if false it will be private.</param>
+        /// <param name="newCollaborative">If true the playlist will become collaborative and other users will be able to modify the playlist in their Spotify client. Note: You can only set collaborative to true on non-public playlists.</param>
+        /// <param name="newDescription">Value for playlist description as displayed in Spotify Clients and in the Web API.</param>
+        /// <returns></returns>
+        /// <remarks>AUTH NEEDED</remarks>
+        public async Task<ErrorResponse> UpdatePlaylistAsync(string playlistId, string newName = null, bool? newPublic = null, bool? newCollaborative = null, string newDescription = null)
+        {
+            JObject body = new JObject();
+            if (newName != null)
+                body.Add("name", newName);
+            if (newPublic != null)
+                body.Add("public", newPublic);
+            if (newCollaborative != null)
+                body.Add("collaborative", newCollaborative);
+            if (newDescription != null)
+                body.Add("description", newDescription);
+            return await UploadDataAsync<ErrorResponse>(_builder.UpdatePlaylist(playlistId), body.ToString(Formatting.None), "PUT").ConfigureAwait(false) ?? new ErrorResponse();
+        }
+
+        /// <summary>
+        ///     Change a playlist’s name and public/private state. (The user must, of course, own the playlist.)
+        /// </summary>
+        /// <param name="userId">The user's Spotify user ID.</param>
+        /// <param name="playlistId">The Spotify ID for the playlist.</param>
+        /// <param name="base64EncodedJpgImage">The image as a base64 encoded string</param>
+        /// <returns></returns>
+        /// <remarks>AUTH NEEDED</remarks>
+        public ErrorResponse UploadPlaylistImage(string userId, string playlistId, string base64EncodedJpgImage)
+        {
+            return UploadData<ErrorResponse>(_builder.UploadPlaylistImage(userId, playlistId), base64EncodedJpgImage, "PUT") ?? new ErrorResponse();
+        }
+
+        /// <summary>
+        ///     Change a playlist’s name and public/private state asynchronously. (The user must, of course, own the playlist.)
+        /// </summary>
+        /// <param name="userId">The user's Spotify user ID.</param>
+        /// <param name="playlistId">The Spotify ID for the playlist.</param>
+        /// <param name="base64EncodedJpgImage">The image as a base64 encoded string</param>
+        /// <returns></returns>
+        /// <remarks>AUTH NEEDED</remarks>
+        public async Task<ErrorResponse> UploadPlaylistImageAsync(string userId, string playlistId, string base64EncodedJpgImage)
+        {
+            return await UploadDataAsync<ErrorResponse>(_builder.UploadPlaylistImage(userId, playlistId), base64EncodedJpgImage, "PUT").ConfigureAwait(false) ?? new ErrorResponse();
+        }
+
+        /// <summary>
+        ///     Change a playlist’s name and public/private state. (The user must, of course, own the playlist.)
+        /// </summary>
+        /// <param name="playlistId">The Spotify ID for the playlist.</param>
+        /// <param name="base64EncodedJpgImage">The image as a base64 encoded string</param>
+        /// <returns></returns>
+        /// <remarks>AUTH NEEDED</remarks>
+        public ErrorResponse UploadPlaylistImage(string playlistId, string base64EncodedJpgImage)
+        {
+            return UploadData<ErrorResponse>(_builder.UploadPlaylistImage(playlistId), base64EncodedJpgImage, "PUT") ?? new ErrorResponse();
+        }
+
+        /// <summary>
+        ///     Change a playlist’s name and public/private state asynchronously. (The user must, of course, own the playlist.)
+        /// </summary>
+        /// <param name="playlistId">The Spotify ID for the playlist.</param>
+        /// <param name="base64EncodedJpgImage">The image as a base64 encoded string</param>
+        /// <returns></returns>
+        /// <remarks>AUTH NEEDED</remarks>
+        public async Task<ErrorResponse> UploadPlaylistImageAsync(string playlistId, string base64EncodedJpgImage)
+        {
+            return await UploadDataAsync<ErrorResponse>(_builder.UploadPlaylistImage(playlistId),
+                       base64EncodedJpgImage, "PUT").ConfigureAwait(false) ?? new ErrorResponse();
         }
 
         /// <summary>
@@ -1506,6 +1720,7 @@ namespace SpotifyAPI.Web
         /// <param name="uris">A list of Spotify track URIs to set. A maximum of 100 tracks can be set in one request.</param>
         /// <returns></returns>
         /// <remarks>AUTH NEEDED</remarks>
+        [Obsolete("Calling ReplacePlaylistTracks with a userId is deprecated, remove the parameter")]
         public ErrorResponse ReplacePlaylistTracks(string userId, string playlistId, List<string> uris)
         {
             JObject body = new JObject
@@ -1513,6 +1728,23 @@ namespace SpotifyAPI.Web
                 {"uris", new JArray(uris.Take(100))}
             };
             return UploadData<ErrorResponse>(_builder.ReplacePlaylistTracks(userId, playlistId), body.ToString(Formatting.None), "PUT") ?? new ErrorResponse();
+        }
+
+        /// <summary>
+        ///     Replace all the tracks in a playlist, overwriting its existing tracks. This powerful request can be useful for
+        ///     replacing tracks, re-ordering existing tracks, or clearing the playlist.
+        /// </summary>
+        /// <param name="playlistId">The Spotify ID for the playlist.</param>
+        /// <param name="uris">A list of Spotify track URIs to set. A maximum of 100 tracks can be set in one request.</param>
+        /// <returns></returns>
+        /// <remarks>AUTH NEEDED</remarks>
+        public ErrorResponse ReplacePlaylistTracks(string playlistId, List<string> uris)
+        {
+            JObject body = new JObject
+            {
+                {"uris", new JArray(uris.Take(100))}
+            };
+            return UploadData<ErrorResponse>(_builder.ReplacePlaylistTracks(playlistId), body.ToString(Formatting.None), "PUT") ?? new ErrorResponse();
         }
 
         /// <summary>
@@ -1524,13 +1756,31 @@ namespace SpotifyAPI.Web
         /// <param name="uris">A list of Spotify track URIs to set. A maximum of 100 tracks can be set in one request.</param>
         /// <returns></returns>
         /// <remarks>AUTH NEEDED</remarks>
+        [Obsolete("Calling ReplacePlaylistTracks with a userId is deprecated, remove the parameter")]
         public async Task<ErrorResponse> ReplacePlaylistTracksAsync(string userId, string playlistId, List<string> uris)
         {
             JObject body = new JObject
             {
                 {"uris", new JArray(uris.Take(100))}
             };
-            return await (UploadDataAsync<ErrorResponse>(_builder.ReplacePlaylistTracks(userId, playlistId), body.ToString(Formatting.None), "PUT").ConfigureAwait(false)) ?? new ErrorResponse();
+            return await UploadDataAsync<ErrorResponse>(_builder.ReplacePlaylistTracks(userId, playlistId), body.ToString(Formatting.None), "PUT").ConfigureAwait(false) ?? new ErrorResponse();
+        }
+
+        /// <summary>
+        ///     Replace all the tracks in a playlist asynchronously, overwriting its existing tracks. This powerful request can be useful for
+        ///     replacing tracks, re-ordering existing tracks, or clearing the playlist.
+        /// </summary>
+        /// <param name="playlistId">The Spotify ID for the playlist.</param>
+        /// <param name="uris">A list of Spotify track URIs to set. A maximum of 100 tracks can be set in one request.</param>
+        /// <returns></returns>
+        /// <remarks>AUTH NEEDED</remarks>
+        public async Task<ErrorResponse> ReplacePlaylistTracksAsync(string playlistId, List<string> uris)
+        {
+            JObject body = new JObject
+            {
+                {"uris", new JArray(uris.Take(100))}
+            };
+            return await UploadDataAsync<ErrorResponse>(_builder.ReplacePlaylistTracks(playlistId), body.ToString(Formatting.None), "PUT").ConfigureAwait(false) ?? new ErrorResponse();
         }
 
         /// <summary>
@@ -1544,6 +1794,7 @@ namespace SpotifyAPI.Web
         /// </param>
         /// <returns></returns>
         /// <remarks>AUTH NEEDED</remarks>
+        [Obsolete("Calling RemovePlaylistTracks with a userId is deprecated, remove the parameter")]
         public ErrorResponse RemovePlaylistTracks(string userId, string playlistId, List<DeleteTrackUri> uris)
         {
             JObject body = new JObject
@@ -1551,6 +1802,25 @@ namespace SpotifyAPI.Web
                 {"tracks", JArray.FromObject(uris.Take(100))}
             };
             return UploadData<ErrorResponse>(_builder.RemovePlaylistTracks(userId, playlistId, uris), body.ToString(Formatting.None), "DELETE") ?? new ErrorResponse();
+        }
+
+        /// <summary>
+        ///     Remove one or more tracks from a user’s playlist.
+        /// </summary>
+        /// <param name="playlistId">The Spotify ID for the playlist.</param>
+        /// <param name="uris">
+        ///     array of objects containing Spotify URI strings (and their position in the playlist). A maximum of
+        ///     100 objects can be sent at once.
+        /// </param>
+        /// <returns></returns>
+        /// <remarks>AUTH NEEDED</remarks>
+        public ErrorResponse RemovePlaylistTracks(string playlistId, List<DeleteTrackUri> uris)
+        {
+            JObject body = new JObject
+            {
+                {"tracks", JArray.FromObject(uris.Take(100))}
+            };
+            return UploadData<ErrorResponse>(_builder.RemovePlaylistTracks(playlistId, uris), body.ToString(Formatting.None), "DELETE") ?? new ErrorResponse();
         }
 
         /// <summary>
@@ -1564,13 +1834,33 @@ namespace SpotifyAPI.Web
         /// </param>
         /// <returns></returns>
         /// <remarks>AUTH NEEDED</remarks>
+        [Obsolete("Calling RemovePlaylistTracks with a userId is deprecated, remove the parameter")]
         public async Task<ErrorResponse> RemovePlaylistTracksAsync(string userId, string playlistId, List<DeleteTrackUri> uris)
         {
             JObject body = new JObject
             {
                 {"tracks", JArray.FromObject(uris.Take(100))}
             };
-            return await (UploadDataAsync<ErrorResponse>(_builder.RemovePlaylistTracks(userId, playlistId, uris), body.ToString(Formatting.None), "DELETE").ConfigureAwait(false)) ?? new ErrorResponse();
+            return await UploadDataAsync<ErrorResponse>(_builder.RemovePlaylistTracks(userId, playlistId, uris), body.ToString(Formatting.None), "DELETE").ConfigureAwait(false) ?? new ErrorResponse();
+        }
+
+        /// <summary>
+        ///     Remove one or more tracks from a user’s playlist asynchronously.
+        /// </summary>
+        /// <param name="playlistId">The Spotify ID for the playlist.</param>
+        /// <param name="uris">
+        ///     array of objects containing Spotify URI strings (and their position in the playlist). A maximum of
+        ///     100 objects can be sent at once.
+        /// </param>
+        /// <returns></returns>
+        /// <remarks>AUTH NEEDED</remarks>
+        public async Task<ErrorResponse> RemovePlaylistTracksAsync(string playlistId, List<DeleteTrackUri> uris)
+        {
+            JObject body = new JObject
+            {
+                {"tracks", JArray.FromObject(uris.Take(100))}
+            };
+            return await UploadDataAsync<ErrorResponse>(_builder.RemovePlaylistTracks(playlistId, uris), body.ToString(Formatting.None), "DELETE").ConfigureAwait(false) ?? new ErrorResponse();
         }
 
         /// <summary>
@@ -1581,9 +1871,22 @@ namespace SpotifyAPI.Web
         /// <param name="uri">Spotify URI</param>
         /// <returns></returns>
         /// <remarks>AUTH NEEDED</remarks>
+        [Obsolete("Calling RemovePlaylistTrack with a userId is deprecated, remove the parameter")]
         public ErrorResponse RemovePlaylistTrack(string userId, string playlistId, DeleteTrackUri uri)
         {
-            return RemovePlaylistTracks(userId, playlistId, new List<DeleteTrackUri> { uri });
+            return RemovePlaylistTracks(playlistId, new List<DeleteTrackUri> { uri });
+        }
+
+        /// <summary>
+        ///     Remove a track from a user’s playlist.
+        /// </summary>
+        /// <param name="playlistId">The Spotify ID for the playlist.</param>
+        /// <param name="uri">Spotify URI</param>
+        /// <returns></returns>
+        /// <remarks>AUTH NEEDED</remarks>
+        public ErrorResponse RemovePlaylistTrack(string playlistId, DeleteTrackUri uri)
+        {
+            return RemovePlaylistTracks(playlistId, new List<DeleteTrackUri> { uri });
         }
 
         /// <summary>
@@ -1594,9 +1897,22 @@ namespace SpotifyAPI.Web
         /// <param name="uri">Spotify URI</param>
         /// <returns></returns>
         /// <remarks>AUTH NEEDED</remarks>
+        [Obsolete("Calling RemovePlaylistTrack with a userId is deprecated, remove the parameter")]
         public Task<ErrorResponse> RemovePlaylistTrackAsync(string userId, string playlistId, DeleteTrackUri uri)
         {
-            return RemovePlaylistTracksAsync(userId, playlistId, new List<DeleteTrackUri> { uri });
+            return RemovePlaylistTracksAsync(playlistId, new List<DeleteTrackUri> { uri });
+        }
+
+        /// <summary>
+        ///     Remove a track from a user’s playlist asynchronously.
+        /// </summary>
+        /// <param name="playlistId">The Spotify ID for the playlist.</param>
+        /// <param name="uri">Spotify URI</param>
+        /// <returns></returns>
+        /// <remarks>AUTH NEEDED</remarks>
+        public Task<ErrorResponse> RemovePlaylistTrackAsync(string playlistId, DeleteTrackUri uri)
+        {
+            return RemovePlaylistTracksAsync(playlistId, new List<DeleteTrackUri> { uri });
         }
 
         /// <summary>
@@ -1608,6 +1924,7 @@ namespace SpotifyAPI.Web
         /// <param name="position">The position to insert the tracks, a zero-based index</param>
         /// <returns></returns>
         /// <remarks>AUTH NEEDED</remarks>
+        [Obsolete("Calling AddPlaylistTracks with a userId is deprecated, remove the parameter")]
         public ErrorResponse AddPlaylistTracks(string userId, string playlistId, List<string> uris, int? position = null)
         {
             JObject body = new JObject
@@ -1615,6 +1932,23 @@ namespace SpotifyAPI.Web
                 {"uris", JArray.FromObject(uris.Take(100))}
             };
             return UploadData<ErrorResponse>(_builder.AddPlaylistTracks(userId, playlistId, uris, position), body.ToString(Formatting.None)) ?? new ErrorResponse();
+        }
+
+        /// <summary>
+        ///     Add one or more tracks to a user’s playlist.
+        /// </summary>
+        /// <param name="playlistId">The Spotify ID for the playlist.</param>
+        /// <param name="uris">A list of Spotify track URIs to add</param>
+        /// <param name="position">The position to insert the tracks, a zero-based index</param>
+        /// <returns></returns>
+        /// <remarks>AUTH NEEDED</remarks>
+        public ErrorResponse AddPlaylistTracks(string playlistId, List<string> uris, int? position = null)
+        {
+            JObject body = new JObject
+            {
+                {"uris", JArray.FromObject(uris.Take(100))}
+            };
+            return UploadData<ErrorResponse>(_builder.AddPlaylistTracks(playlistId, uris, position), body.ToString(Formatting.None)) ?? new ErrorResponse();
         }
 
         /// <summary>
@@ -1626,13 +1960,31 @@ namespace SpotifyAPI.Web
         /// <param name="position">The position to insert the tracks, a zero-based index</param>
         /// <returns></returns>
         /// <remarks>AUTH NEEDED</remarks>
+        [Obsolete("Calling AddPlaylistTracks with a userId is deprecated, remove the parameter")]
         public async Task<ErrorResponse> AddPlaylistTracksAsync(string userId, string playlistId, List<string> uris, int? position = null)
         {
             JObject body = new JObject
             {
                 {"uris", JArray.FromObject(uris.Take(100))}
             };
-            return await (UploadDataAsync<ErrorResponse>(_builder.AddPlaylistTracks(userId, playlistId, uris, position), body.ToString(Formatting.None)).ConfigureAwait(false)) ?? new ErrorResponse();
+            return await UploadDataAsync<ErrorResponse>(_builder.AddPlaylistTracks(userId, playlistId, uris, position), body.ToString(Formatting.None)).ConfigureAwait(false) ?? new ErrorResponse();
+        }
+
+        /// <summary>
+        ///     Add one or more tracks to a user’s playlist asynchronously.
+        /// </summary>
+        /// <param name="playlistId">The Spotify ID for the playlist.</param>
+        /// <param name="uris">A list of Spotify track URIs to add</param>
+        /// <param name="position">The position to insert the tracks, a zero-based index</param>
+        /// <returns></returns>
+        /// <remarks>AUTH NEEDED</remarks>
+        public async Task<ErrorResponse> AddPlaylistTracksAsync(string playlistId, List<string> uris, int? position = null)
+        {
+            JObject body = new JObject
+            {
+                {"uris", JArray.FromObject(uris.Take(100))}
+            };
+            return await UploadDataAsync<ErrorResponse>(_builder.AddPlaylistTracks(playlistId, uris, position), body.ToString(Formatting.None)).ConfigureAwait(false) ?? new ErrorResponse();
         }
 
         /// <summary>
@@ -1644,9 +1996,24 @@ namespace SpotifyAPI.Web
         /// <param name="position">The position to insert the tracks, a zero-based index</param>
         /// <returns></returns>
         /// <remarks>AUTH NEEDED</remarks>
+        [Obsolete("Calling AddPlaylistTrack with a userId is deprecated, remove the parameter")]
         public ErrorResponse AddPlaylistTrack(string userId, string playlistId, string uri, int? position = null)
         {
-            return AddPlaylistTracks(userId, playlistId, new List<string> { uri }, position);
+            return AddPlaylistTracks(playlistId, new List<string> { uri }, position);
+        }
+
+
+        /// <summary>
+        ///     Add a track to a user’s playlist.
+        /// </summary>
+        /// <param name="playlistId">The Spotify ID for the playlist.</param>
+        /// <param name="uri">A Spotify Track URI</param>
+        /// <param name="position">The position to insert the tracks, a zero-based index</param>
+        /// <returns></returns>
+        /// <remarks>AUTH NEEDED</remarks>
+        public ErrorResponse AddPlaylistTrack(string playlistId, string uri, int? position = null)
+        {
+            return AddPlaylistTracks(playlistId, new List<string> { uri }, position);
         }
 
         /// <summary>
@@ -1658,9 +2025,23 @@ namespace SpotifyAPI.Web
         /// <param name="position">The position to insert the tracks, a zero-based index</param>
         /// <returns></returns>
         /// <remarks>AUTH NEEDED</remarks>
+        [Obsolete("Calling AddPlaylistTrack with a userId is deprecated, remove the parameter")]
         public Task<ErrorResponse> AddPlaylistTrackAsync(string userId, string playlistId, string uri, int? position = null)
         {
             return AddPlaylistTracksAsync(userId, playlistId, new List<string> { uri }, position);
+        }
+
+        /// <summary>
+        ///     Add a track to a user’s playlist asynchronously.
+        /// </summary>
+        /// <param name="playlistId">The Spotify ID for the playlist.</param>
+        /// <param name="uri">A Spotify Track URI</param>
+        /// <param name="position">The position to insert the tracks, a zero-based index</param>
+        /// <returns></returns>
+        /// <remarks>AUTH NEEDED</remarks>
+        public Task<ErrorResponse> AddPlaylistTrackAsync(string playlistId, string uri, int? position = null)
+        {
+            return AddPlaylistTracksAsync(playlistId, new List<string> { uri }, position);
         }
 
         /// <summary>
@@ -1674,6 +2055,7 @@ namespace SpotifyAPI.Web
         /// <param name="snapshotId">The playlist's snapshot ID against which you want to make the changes.</param>
         /// <returns></returns>
         /// <remarks>AUTH NEEDED</remarks>
+        [Obsolete("Calling ReorderPlaylist with a userId is deprecated, remove the parameter")]
         public Snapshot ReorderPlaylist(string userId, string playlistId, int rangeStart, int insertBefore, int rangeLength = 1, string snapshotId = "")
         {
             JObject body = new JObject
@@ -1688,6 +2070,29 @@ namespace SpotifyAPI.Web
         }
 
         /// <summary>
+        ///     Reorder a track or a group of tracks in a playlist.
+        /// </summary>
+        /// <param name="playlistId">The Spotify ID for the playlist.</param>
+        /// <param name="rangeStart">The position of the first track to be reordered.</param>
+        /// <param name="insertBefore">The position where the tracks should be inserted. </param>
+        /// <param name="rangeLength">The amount of tracks to be reordered. Defaults to 1 if not set.</param>
+        /// <param name="snapshotId">The playlist's snapshot ID against which you want to make the changes.</param>
+        /// <returns></returns>
+        /// <remarks>AUTH NEEDED</remarks>
+        public Snapshot ReorderPlaylist(string playlistId, int rangeStart, int insertBefore, int rangeLength = 1, string snapshotId = "")
+        {
+            JObject body = new JObject
+            {
+                {"range_start", rangeStart},
+                {"range_length", rangeLength},
+                {"insert_before", insertBefore}
+            };
+            if (!string.IsNullOrEmpty(snapshotId))
+                body.Add("snapshot_id", snapshotId);
+            return UploadData<Snapshot>(_builder.ReorderPlaylist(playlistId), body.ToString(Formatting.None), "PUT");
+        }
+
+        /// <summary>
         ///     Reorder a track or a group of tracks in a playlist asynchronously.
         /// </summary>
         /// <param name="userId">The user's Spotify user ID.</param>
@@ -1698,6 +2103,7 @@ namespace SpotifyAPI.Web
         /// <param name="snapshotId">The playlist's snapshot ID against which you want to make the changes.</param>
         /// <returns></returns>
         /// <remarks>AUTH NEEDED</remarks>
+        [Obsolete("Calling ReorderPlaylist with a userId is deprecated, remove the parameter")]
         public Task<Snapshot> ReorderPlaylistAsync(string userId, string playlistId, int rangeStart, int insertBefore, int rangeLength = 1, string snapshotId = "")
         {
             JObject body = new JObject
@@ -1710,6 +2116,30 @@ namespace SpotifyAPI.Web
             if (!string.IsNullOrEmpty(snapshotId))
                 body.Add("snapshot_id", snapshotId);
             return UploadDataAsync<Snapshot>(_builder.ReorderPlaylist(userId, playlistId), body.ToString(Formatting.None), "PUT");
+        }
+
+        /// <summary>
+        ///     Reorder a track or a group of tracks in a playlist asynchronously.
+        /// </summary>
+        /// <param name="playlistId">The Spotify ID for the playlist.</param>
+        /// <param name="rangeStart">The position of the first track to be reordered.</param>
+        /// <param name="insertBefore">The position where the tracks should be inserted. </param>
+        /// <param name="rangeLength">The amount of tracks to be reordered. Defaults to 1 if not set.</param>
+        /// <param name="snapshotId">The playlist's snapshot ID against which you want to make the changes.</param>
+        /// <returns></returns>
+        /// <remarks>AUTH NEEDED</remarks>
+        public Task<Snapshot> ReorderPlaylistAsync(string playlistId, int rangeStart, int insertBefore, int rangeLength = 1, string snapshotId = "")
+        {
+            JObject body = new JObject
+            {
+                {"range_start", rangeStart},
+                {"range_length", rangeLength},
+                {"insert_before", insertBefore},
+                {"snapshot_id", snapshotId}
+            };
+            if (!string.IsNullOrEmpty(snapshotId))
+                body.Add("snapshot_id", snapshotId);
+            return UploadDataAsync<Snapshot>(_builder.ReorderPlaylist(playlistId), body.ToString(Formatting.None), "PUT");
         }
 
         #endregion Playlists
@@ -1972,7 +2402,7 @@ namespace SpotifyAPI.Web
         /// <returns></returns>
         public ErrorResponse TransferPlayback(List<string> deviceIds, bool play = false)
         {
-            JObject ob = new JObject()
+            JObject ob = new JObject
             {
                 { "play", play },
                 { "device_ids", new JArray(deviceIds) }
@@ -1992,7 +2422,7 @@ namespace SpotifyAPI.Web
         /// <returns></returns>
         public Task<ErrorResponse> TransferPlaybackAsync(List<string> deviceIds, bool play = false)
         {
-            JObject ob = new JObject()
+            JObject ob = new JObject
             {
                 { "play", play },
                 { "device_ids", new JArray(deviceIds) }
@@ -2007,8 +2437,8 @@ namespace SpotifyAPI.Web
         /// <param name="contextUri">Spotify URI of the context to play.</param>
         /// <param name="uris">A JSON array of the Spotify track URIs to play.</param>
         /// <param name="offset">Indicates from where in the context playback should start.
-        /// <param name="positionMs">The starting time to seek the track to</param>
         /// Only available when context_uri corresponds to an album or playlist object, or when the uris parameter is used.</param>
+        /// <param name="positionMs">The starting time to seek the track to</param>
         /// <returns></returns>
         public ErrorResponse ResumePlayback(string deviceId = "", string contextUri = "", List<string> uris = null,
             int? offset = null, int positionMs = 0)
@@ -2032,8 +2462,8 @@ namespace SpotifyAPI.Web
         /// <param name="contextUri">Spotify URI of the context to play.</param>
         /// <param name="uris">A JSON array of the Spotify track URIs to play.</param>
         /// <param name="offset">Indicates from where in the context playback should start.
-        /// <param name="positionMs">The starting time to seek the track to</param>
         /// Only available when context_uri corresponds to an album or playlist object, or when the uris parameter is used.</param>
+        /// <param name="positionMs">The starting time to seek the track to</param>
         /// <returns></returns>
         public Task<ErrorResponse> ResumePlaybackAsync(string deviceId = "", string contextUri = "", List<string> uris = null,
             int? offset = null, int positionMs = 0)
@@ -2057,8 +2487,8 @@ namespace SpotifyAPI.Web
         /// <param name="contextUri">Spotify URI of the context to play.</param>
         /// <param name="uris">A JSON array of the Spotify track URIs to play.</param>
         /// <param name="offset">Indicates from where in the context playback should start.
-        /// <param name="positionMs">The starting time to seek the track to</param>
         /// Only available when context_uri corresponds to an album or playlist object, or when the uris parameter is used.</param>
+        /// <param name="positionMs">The starting time to seek the track to</param>
         /// <returns></returns>
         public ErrorResponse ResumePlayback(string deviceId = "", string contextUri = "", List<string> uris = null,
             string offset = "", int positionMs = 0)
@@ -2082,8 +2512,8 @@ namespace SpotifyAPI.Web
         /// <param name="contextUri">Spotify URI of the context to play.</param>
         /// <param name="uris">A JSON array of the Spotify track URIs to play.</param>
         /// <param name="offset">Indicates from where in the context playback should start.
-        /// <param name="positionMs">The starting time to seek the track to</param>
         /// Only available when context_uri corresponds to an album or playlist object, or when the uris parameter is used.</param>
+        /// <param name="positionMs">The starting time to seek the track to</param>
         /// <returns></returns>
         public Task<ErrorResponse> ResumePlaybackAsync(string deviceId = "", string contextUri = "", List<string> uris = null,
             string offset = "", int positionMs = 0)
@@ -2464,7 +2894,7 @@ namespace SpotifyAPI.Web
             {
                 return -1;
             }
-            if (!int.TryParse(info.Headers.Get("Retry-After"), out var secondsToWait))
+            if (!int.TryParse(info.Headers.Get("Retry-After"), out int secondsToWait))
             {
                 return -1;
             }
@@ -2482,7 +2912,7 @@ namespace SpotifyAPI.Web
                 if (response != null)
                 {
                     int msToWait = RetryAfter;
-                    var secondsToWait = GetTooManyRequests(response.Item1);
+                    int secondsToWait = GetTooManyRequests(response.Item1);
                     if (secondsToWait > 0)
                     {
                         msToWait = secondsToWait * 1000;
@@ -2502,7 +2932,7 @@ namespace SpotifyAPI.Web
             } while (UseAutoRetry
                 && triesLeft > 0
                 && (GetTooManyRequests(response.Item1) != -1
-                    || (lastError != null && RetryErrorCodes.Contains(lastError.Status))));
+                    || lastError != null && RetryErrorCodes.Contains(lastError.Status)));
 
 
             return response.Item2;
