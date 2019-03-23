@@ -51,7 +51,6 @@ namespace SpotifyAPI.Web
 
         #region Configuration
 
-
         public Token Token { get; set; }
 
         /// <summary>

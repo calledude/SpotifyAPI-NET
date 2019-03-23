@@ -113,7 +113,7 @@ namespace SpotifyAPI.Web.Auth
             }
             else
             {
-                lastWebApi.AccessToken = token.AccessToken;
+                lastWebApi.Token = token;
                 OnAuthSuccess?.Invoke(this, new AuthSuccessEventArgs());
             }
         }
@@ -202,9 +202,9 @@ namespace SpotifyAPI.Web.Auth
                     MaxGetTokenRetries = MaxGetTokenRetries,
                     TimeAccessExpiry = AutoRefresh || TimeAccessExpiry
                 };
-                lastAuth.AuthReceived += async (sender, response) =>
+                lastAuth.AuthReceived += (sender, response) =>
                 {
-                    if (!string.IsNullOrEmpty(response.Error) || string.IsNullOrEmpty(response.Code))
+                    if (!string.IsNullOrEmpty(response.Error))
                     {
                         // We only want one auth failure to be fired, if the request timed out then don't bother.
                         if (!webApiTimeoutTimer.Enabled) return;
@@ -214,7 +214,7 @@ namespace SpotifyAPI.Web.Auth
                         return;
                     }
 
-                    lastToken = await lastAuth.ExchangeCodeAsync(response.Code);
+                    lastToken = response;
 
                     if (lastToken == null || lastToken.HasError() || string.IsNullOrEmpty(lastToken.AccessToken))
                     {
@@ -232,8 +232,7 @@ namespace SpotifyAPI.Web.Auth
                     }
                     lastWebApi = new SpotifyWebAPI()
                     {
-                        TokenType = lastToken.TokenType,
-                        AccessToken = lastToken.AccessToken
+                        Token = lastToken
                     };
 
                     lastAuth.Stop();
