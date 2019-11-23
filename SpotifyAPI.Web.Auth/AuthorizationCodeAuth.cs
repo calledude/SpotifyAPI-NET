@@ -84,15 +84,15 @@ namespace SpotifyAPI.Web.Auth
 
         private async Task<Token> GetToken(IEnumerable<KeyValuePair<string, string>> args)
         {
-            HttpClientHandler handler = ProxyConfig.CreateClientHandler(ProxyConfig);
-            HttpClient client = new HttpClient(handler);
-            client.DefaultRequestHeaders.Add("Authorization", GetAuthHeader());
-            HttpContent content = new FormUrlEncodedContent(args);
-
-            HttpResponseMessage resp = await client.PostAsync("https://accounts.spotify.com/api/token", content);
-            string msg = await resp.Content.ReadAsStringAsync();
-
-            return JsonConvert.DeserializeObject<Token>(msg);
+            using (HttpClientHandler handler = ProxyConfig.CreateClientHandler(ProxyConfig))
+            using (HttpClient client = new HttpClient(handler))
+            using (HttpContent content = new FormUrlEncodedContent(args))
+            {
+                client.DefaultRequestHeaders.Add("Authorization", GetAuthHeader());
+                HttpResponseMessage resp = await client.PostAsync("https://accounts.spotify.com/api/token", content);
+                string msg = await resp.Content.ReadAsStringAsync();
+                return JsonConvert.DeserializeObject<Token>(msg);
+            }
         }
     }
 
