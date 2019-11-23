@@ -1,11 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using Moq;
+﻿using Moq;
 using Newtonsoft.Json;
 using NUnit.Framework;
 using SpotifyAPI.Web.Models;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 
 namespace SpotifyAPI.Web.Tests
 {
@@ -24,7 +24,8 @@ namespace SpotifyAPI.Web.Tests
             _spotify = new SpotifyWebAPI
             {
                 WebClient = _mock.Object,
-                UseAuth = false
+                UseAuth = false,
+                Token = new Token()
             };
         }
 
@@ -71,7 +72,7 @@ namespace SpotifyAPI.Web.Tests
             _spotify.UseAuth = false;
             Assert.AreEqual(profile, _spotify.GetPublicProfile("wizzler"));
             _mock.Verify(client => client.DownloadJson<PublicProfile>(
-                It.Is<string>(str => ContainsValues(str, "/users/wizzler")), 
+                It.Is<string>(str => ContainsValues(str, "/users/wizzler")),
                 It.Is<Dictionary<string, string>>(headers => headers.Count == 0)), Times.Exactly(1));
         }
 
