@@ -15,6 +15,7 @@ namespace SpotifyAPI.Web
     public sealed class SpotifyWebAPI : IDisposable
     {
         private readonly SpotifyWebBuilder _builder;
+        public event Action<Error> OnError;
 
         public SpotifyWebAPI() : this(null)
         {
@@ -22,6 +23,7 @@ namespace SpotifyAPI.Web
 
         public SpotifyWebAPI(ProxyConfig proxyConfig)
         {
+            BasicModel.OnError += PropagateErrorEvent;
             _builder = new SpotifyWebBuilder();
             UseAuth = true;
             WebClient = new SpotifyWebClient(proxyConfig)
@@ -34,23 +36,21 @@ namespace SpotifyAPI.Web
             };
         }
 
+        internal void PropagateErrorEvent(Error error)
+        {
+            OnError?.Invoke(error);
+        }
+
         public void Dispose()
         {
+            BasicModel.OnError -= PropagateErrorEvent;
             WebClient.Dispose();
             GC.SuppressFinalize(this);
         }
 
         #region Configuration
 
-        /// <summary>
-        ///     The type of the <see cref="AccessToken"/>
-        /// </summary>
-        public string TokenType { get; set; }
-
-        /// <summary>
-        ///     A valid token issued by spotify. Used only when <see cref="UseAuth"/> is true
-        /// </summary>
-        public string AccessToken { get; set; }
+        public Token Token { get; set; }
 
         /// <summary>
         ///     If true, an authorization header based on <see cref="TokenType"/> and <see cref="AccessToken"/> will be used
@@ -2835,7 +2835,7 @@ namespace SpotifyAPI.Web
             {
                 Dictionary<string, string> headers = new Dictionary<string, string>
                 {
-                    { "Authorization", TokenType + " " + AccessToken},
+                    { "Authorization", Token.TokenType + " " + Token.AccessToken},
                     { "Content-Type", "application/json" }
                 };
 
@@ -2864,7 +2864,7 @@ namespace SpotifyAPI.Web
             {
                 Dictionary<string, string> headers = new Dictionary<string, string>
                 {
-                    { "Authorization", TokenType + " " + AccessToken},
+                    { "Authorization", Token.TokenType + " " + Token.AccessToken},
                     { "Content-Type", "application/json" }
                 };
 
@@ -2964,7 +2964,7 @@ namespace SpotifyAPI.Web
         {
             Dictionary<string, string> headers = new Dictionary<string, string>();
             if (UseAuth)
-                headers.Add("Authorization", TokenType + " " + AccessToken);
+                headers.Add("Authorization", Token.TokenType + " " + Token.AccessToken);
             return WebClient.DownloadJson<T>(url, headers);
         }
 
@@ -2972,7 +2972,7 @@ namespace SpotifyAPI.Web
         {
             Dictionary<string, string> headers = new Dictionary<string, string>();
             if (UseAuth)
-                headers.Add("Authorization", TokenType + " " + AccessToken);
+                headers.Add("Authorization", Token.TokenType + " " + Token.AccessToken);
             return WebClient.DownloadJsonAsync<T>(url, headers);
         }
 

@@ -210,12 +210,16 @@ namespace SpotifyAPI.Web.Auth
                 code = Request.QueryString["code"];
             }
 
-            Task.Factory.StartNew(() => auth?.TriggerAuth(new AuthorizationCode
+            AuthorizationCode authcode = new AuthorizationCode
             {
                 Code = code,
                 Error = error
-            }));
-            return HttpContext.HtmlResponseAsync(((TokenSwapAuth) auth).HtmlResponse);
+            };
+
+            AuthorizationCodeAuth au = (AuthorizationCodeAuth)auth;
+
+            Task.Factory.StartNew(async () => auth?.TriggerAuth(await au.ExchangeCode(authcode.Code)));
+            return HttpContext.HtmlResponseAsync(((TokenSwapAuth)auth).HtmlResponse);
         }
     }
 }

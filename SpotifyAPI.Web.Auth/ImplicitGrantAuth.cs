@@ -55,7 +55,7 @@ namespace SpotifyAPI.Web.Auth
             }
 
             Task.Factory.StartNew(() => auth.TriggerAuth(token));
-            return HttpContext.HtmlResponseAsync("<html><script type=\"text/javascript\">window.close();</script>OK - This window can be closed now</html>");
+            return HttpContext.HtmlResponseAsync("<script>window.close()</script>");
         }
 
         public ImplicitGrantAuthController(IHttpContext context) : base(context)

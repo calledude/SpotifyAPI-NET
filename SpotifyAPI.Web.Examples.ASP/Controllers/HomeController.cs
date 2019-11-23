@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SpotifyAPI.Web.Examples.ASP.Models;
+using SpotifyAPI.Web.Models;
 
 namespace SpotifyAPI.Web.Examples.ASP.Controllers
 {
@@ -15,8 +16,11 @@ namespace SpotifyAPI.Web.Examples.ASP.Controllers
             var accessToken = await HttpContext.GetTokenAsync("Spotify", "access_token");
             SpotifyWebAPI api = new SpotifyWebAPI
             {
-                AccessToken = accessToken,
-                TokenType = "Bearer"
+                Token = new Token
+                {
+                    AccessToken = accessToken,
+                    TokenType = "Bearer"
+                }
             };
 
             var savedTracks = await api.GetSavedTracksAsync(50);

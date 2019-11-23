@@ -1,11 +1,11 @@
+using Newtonsoft.Json;
+using SpotifyAPI.Web.Enums;
+using SpotifyAPI.Web.Models;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using SpotifyAPI.Web.Enums;
-using SpotifyAPI.Web.Models;
 using Unosquare.Labs.EmbedIO;
 using Unosquare.Labs.EmbedIO.Constants;
 using Unosquare.Labs.EmbedIO.Modules;
@@ -15,12 +15,18 @@ namespace SpotifyAPI.Web.Auth
     public class AuthorizationCodeAuth : SpotifyAuthServer<AuthorizationCode>
     {
         public string SecretId { get; set; }
-        
+
         public ProxyConfig ProxyConfig { get; set; }
 
-        public AuthorizationCodeAuth(string redirectUri, string serverUri, Scope scope = Scope.None, string state = "")
+        private AuthorizationCodeAuth(string redirectUri, string serverUri, Scope scope = Scope.None, string state = "")
             : base("code", "AuthorizationCodeAuth", redirectUri, serverUri, scope, state)
         {
+        }
+
+        public AuthorizationCodeAuth(string clientId, string redirectUri, string serverUri, Scope scope = Scope.None, string state = "")
+            : this(redirectUri, serverUri, scope, state)
+        {
+            ClientId = clientId;
         }
 
         public AuthorizationCodeAuth(string clientId, string secretId, string redirectUri, string serverUri, Scope scope = Scope.None, string state = "")
@@ -55,10 +61,12 @@ namespace SpotifyAPI.Web.Auth
                 new KeyValuePair<string, string>("refresh_token", refreshToken)
             };
 
-            return await GetToken(args);
+            var t = await GetToken(args);
+            t.RefreshToken = t.RefreshToken ?? refreshToken;
+            return t;
         }
 
-        public async Task<Token> ExchangeCode(string code)
+        internal async Task<Token> ExchangeCode(string code)
         {
             List<KeyValuePair<string, string>> args = new List<KeyValuePair<string, string>>
             {
@@ -104,13 +112,17 @@ namespace SpotifyAPI.Web.Auth
             if (error == null)
                 code = Request.QueryString["code"];
 
-            Task.Factory.StartNew(() => auth?.TriggerAuth(new AuthorizationCode
+            AuthorizationCode authcode = new AuthorizationCode
             {
                 Code = code,
                 Error = error
-            }));
-            
-            return HttpContext.HtmlResponseAsync("<html><script type=\"text/javascript\">window.close();</script>OK - This window can be closed now</html>");
+            };
+
+            AuthorizationCodeAuth au = (AuthorizationCodeAuth)auth;
+
+            Task.Factory.StartNew(async () => auth?.TriggerAuth(await au.ExchangeCode(authcode.Code)));
+
+            return HttpContext.HtmlResponseAsync("<script>window.close()</script>");
         }
 
         [WebApiHandler(HttpVerbs.Post, "/")]
@@ -118,12 +130,12 @@ namespace SpotifyAPI.Web.Auth
         {
             Dictionary<string, object> formParams = await HttpContext.RequestFormDataDictionaryAsync();
 
-            string state = (string) formParams["state"];
+            string state = (string)formParams["state"];
             AuthorizationCodeAuth.Instances.TryGetValue(state, out SpotifyAuthServer<AuthorizationCode> authServer);
 
-            AuthorizationCodeAuth auth = (AuthorizationCodeAuth) authServer;
-            auth.ClientId = (string) formParams["clientId"];
-            auth.SecretId = (string) formParams["secretId"];
+            AuthorizationCodeAuth auth = (AuthorizationCodeAuth)authServer;
+            auth.ClientId = (string)formParams["clientId"];
+            auth.SecretId = (string)formParams["secretId"];
 
             string uri = auth.GetUri();
             return HttpContext.Redirect(uri, false);
