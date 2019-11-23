@@ -1,10 +1,10 @@
-﻿using System;
+﻿using SpotifyAPI.Web.Enums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading;
-using SpotifyAPI.Web.Enums;
 using Unosquare.Labs.EmbedIO;
 using Unosquare.Labs.EmbedIO.Modules;
 using Unosquare.Swan;
@@ -40,9 +40,7 @@ namespace SpotifyAPI.Web.Auth
             _server.RegisterModule(new WebApiModule());
             AdaptWebServer(_server);
             _server.RegisterModule(new ResourceFilesModule(Assembly.GetExecutingAssembly(), $"SpotifyAPI.Web.Auth.Resources.{_folder}"));
-#pragma warning disable 4014
-            _server.RunAsync(_serverSource.Token);
-#pragma warning restore 4014
+            _ = _server.RunAsync(_serverSource.Token);
         }
 
         public virtual string GetUri()
@@ -69,7 +67,7 @@ namespace SpotifyAPI.Web.Auth
             string uri = GetUri();
             AuthUtil.OpenBrowser(uri);
         }
-        
+
         internal static SpotifyAuthServer<T> GetByState(string state)
         {
             return Instances.TryGetValue(state, out SpotifyAuthServer<T> auth) ? auth : null;

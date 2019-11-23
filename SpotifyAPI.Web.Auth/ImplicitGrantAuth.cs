@@ -1,6 +1,6 @@
-using System.Threading.Tasks;
 using SpotifyAPI.Web.Enums;
 using SpotifyAPI.Web.Models;
+using System.Threading.Tasks;
 using Unosquare.Labs.EmbedIO;
 using Unosquare.Labs.EmbedIO.Constants;
 using Unosquare.Labs.EmbedIO.Modules;
@@ -9,6 +9,10 @@ namespace SpotifyAPI.Web.Auth
 {
     public class ImplicitGrantAuth : SpotifyAuthServer<Token>
     {
+        public ImplicitGrantAuth() : base("token", "ImplicitGrantAuth", null, null)
+        {
+        }
+
         public ImplicitGrantAuth(string clientId, string redirectUri, string serverUri, Scope scope = Scope.None, string state = "") :
             base("token", "ImplicitGrantAuth", redirectUri, serverUri, scope, state)
         {

@@ -1,5 +1,6 @@
 ﻿using SpotifyAPI.Web.Enums;
 using SpotifyAPI.Web.Models;
+using System;
 
 namespace SpotifyAPI.Web.Auth
 {
@@ -15,8 +16,7 @@ namespace SpotifyAPI.Web.Auth
         public abstract void Stop(int delay = 2000);
         public abstract void OpenBrowser();
 
-        public delegate void OnAuthReceived(object sender, Token payload);
-        public event OnAuthReceived AuthReceived;
+        public event EventHandler<Token> AuthReceived;
 
         internal void TriggerAuth(Token payload)
         {

@@ -18,6 +18,10 @@ namespace SpotifyAPI.Web.Auth
 
         public ProxyConfig ProxyConfig { get; set; }
 
+        public AuthorizationCodeAuth() : base("code", "AuthorizationCodeAuth", null, null)
+        {
+        }
+
         private AuthorizationCodeAuth(string redirectUri, string serverUri, Scope scope = Scope.None, string state = "")
             : base("code", "AuthorizationCodeAuth", redirectUri, serverUri, scope, state)
         {
