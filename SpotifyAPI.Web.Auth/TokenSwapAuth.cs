@@ -1,14 +1,14 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using SpotifyAPI.Web.Enums;
+using SpotifyAPI.Web.Models;
+using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using SpotifyAPI.Web.Enums;
 using Unosquare.Labs.EmbedIO;
 using Unosquare.Labs.EmbedIO.Constants;
 using Unosquare.Labs.EmbedIO.Modules;
-using SpotifyAPI.Web.Models;
-using Newtonsoft.Json;
-using System.Net.Http;
 
 namespace SpotifyAPI.Web.Auth
 {
@@ -217,10 +217,10 @@ namespace SpotifyAPI.Web.Auth
                 Error = error
             };
 
-            AuthorizationCodeAuth au = (AuthorizationCodeAuth)auth;
+            TokenSwapAuth au = (TokenSwapAuth)auth;
 
-            Task.Factory.StartNew(async () => auth?.TriggerAuth(await au.ExchangeCode(authcode.Code)));
-            return HttpContext.HtmlResponseAsync(((TokenSwapAuth)auth).HtmlResponse);
+            Task.Factory.StartNew(async () => auth?.TriggerAuth(await au.ExchangeCodeAsync(authcode.Code)));
+            return HttpContext.HtmlResponseAsync(au.HtmlResponse);
         }
     }
 }
