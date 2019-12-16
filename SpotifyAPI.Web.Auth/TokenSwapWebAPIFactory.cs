@@ -115,7 +115,7 @@ namespace SpotifyAPI.Web.Auth
             else
             {
                 lastWebApi.Token = token;
-                OnAuthSuccess?.Invoke(this, new AuthSuccessEventArgs());
+                OnTokenRefreshSuccess?.Invoke(this, new AuthSuccessEventArgs());
             }
         }
 
