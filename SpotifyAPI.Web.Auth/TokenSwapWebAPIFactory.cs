@@ -91,6 +91,7 @@ namespace SpotifyAPI.Web.Auth
         /// </summary>
         public event EventHandler<ExchangeReadyEventArgs> OnExchangeReady;
 
+        public event EventHandler<AuthSuccessEventArgs> OnTokenRefreshSuccess;
         /// <summary>
         /// Refreshes the access for a SpotifyWebAPI returned by this factory.
         /// </summary>
