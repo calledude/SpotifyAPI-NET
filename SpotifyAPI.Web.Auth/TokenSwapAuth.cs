@@ -121,6 +121,7 @@ namespace SpotifyAPI.Web.Auth
             else
             {
                 currentRetries++;
+                await Task.Delay(125 * currentRetries);
                 // The reason I chose to implement the retries system this way is because a static or instance
                 // variable keeping track would inhibit parallelism i.e. using this function on multiple threads/tasks.
                 // It's not clear why someone would like to do that, but it's better to cater for all kinds of uses.
