@@ -59,7 +59,7 @@ namespace SpotifyAPI.Web.Auth
 
         public override string GetUri()
         {
-            StringBuilder builder = new StringBuilder(_exchangeServerUri);
+            StringBuilder builder = new StringBuilder(_exchangeServerUri + "/authorize");
             builder.Append("?");
             builder.Append("response_type=code");
             builder.Append("&state=" + State);
@@ -83,25 +83,31 @@ namespace SpotifyAPI.Web.Auth
         /// </para>
         /// </summary>
         /// <param name="grantType">Can only be "refresh_token" or "authorization_code".</param>
+        /// <param name="endpoint">What action to execute. E.g. '/refresh'</param>
         /// <param name="authorizationCode">This needs to be defined if "grantType" is "authorization_code".</param>
         /// <param name="refreshToken">This needs to be defined if "grantType" is "refresh_token".</param>
         /// <param name="currentRetries">Does not need to be defined. Used internally for retry attempt recursion.</param>
         /// <returns>Attempts to return a full <see cref="Token"/>, but after retry attempts, may return a <see cref="Token"/> with no <see cref="Token.AccessToken"/>, or null.</returns>
-        async Task<Token> GetToken(string grantType, string authorizationCode = "", string refreshToken = "",
+        async Task<Token> GetToken(string grantType, string endpoint, string authorizationCode = "", string refreshToken = "",
             int currentRetries = 0)
         {
-            FormUrlEncodedContent content = new FormUrlEncodedContent(new Dictionary<string, string>
+            var parameters = new Dictionary<string, string>()
             {
-                {"grant_type", grantType},
-                {"code", authorizationCode},
-                {"refresh_token", refreshToken}
-            });
+                {"grant_type", grantType}
+            };
+
+            if (!string.IsNullOrEmpty(authorizationCode))
+                parameters.Add("code", authorizationCode);
+            else if (!string.IsNullOrEmpty(refreshToken))
+                parameters.Add("refresh_token", refreshToken);
+
+            FormUrlEncodedContent content = new FormUrlEncodedContent(parameters);
 
             try
             {
                 HttpClientHandler handler = ProxyConfig.CreateClientHandler(ProxyConfig);
                 HttpClient client = new HttpClient(handler);
-                HttpResponseMessage siteResponse = await client.PostAsync(_exchangeServerUri, content);
+                HttpResponseMessage siteResponse = await client.PostAsync(_exchangeServerUri + endpoint, content);
 
                 Token token = JsonConvert.DeserializeObject<Token>(await siteResponse.Content.ReadAsStringAsync());
                 // Don't need to check if it was null - if it is, it will resort to the catch block.
@@ -125,7 +131,7 @@ namespace SpotifyAPI.Web.Auth
                 // The reason I chose to implement the retries system this way is because a static or instance
                 // variable keeping track would inhibit parallelism i.e. using this function on multiple threads/tasks.
                 // It's not clear why someone would like to do that, but it's better to cater for all kinds of uses.
-                return await GetToken(grantType, authorizationCode, refreshToken, currentRetries);
+                return await GetToken(grantType, endpoint, authorizationCode, refreshToken, currentRetries);
             }
         }
 
@@ -166,7 +172,7 @@ namespace SpotifyAPI.Web.Auth
         /// <returns></returns>
         public async Task<Token> ExchangeCodeAsync(string authorizationCode)
         {
-            Token token = await GetToken("authorization_code", authorizationCode: authorizationCode);
+            Token token = await GetToken("authorization_code", "/authorize", authorizationCode);
             if (token != null && !token.HasError() && !string.IsNullOrEmpty(token.AccessToken))
             {
                 SetAccessExpireTimer(token);
@@ -182,7 +188,7 @@ namespace SpotifyAPI.Web.Auth
         /// <returns></returns>
         public async Task<Token> RefreshAuthAsync(string refreshToken)
         {
-            Token token = await GetToken("refresh_token", refreshToken: refreshToken);
+            Token token = await GetToken("refresh_token", "/refresh", refreshToken: refreshToken);
             if (token != null && !token.HasError() && !string.IsNullOrEmpty(token.AccessToken))
             {
                 SetAccessExpireTimer(token);
