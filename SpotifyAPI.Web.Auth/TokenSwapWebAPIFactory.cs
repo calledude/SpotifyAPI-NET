@@ -90,10 +90,6 @@ namespace SpotifyAPI.Web.Auth
         private SpotifyWebAPI _lastWebApi;
         private TokenSwapAuth _lastAuth;
 
-        public class ExchangeReadyEventArgs : EventArgs
-        {
-            public string ExchangeUri { get; set; }
-        }
 
         /// <summary>
         /// When the URI to get an authorization code is ready to be used to be visited. Not required if <see cref="OpenBrowser"/> is true as the exchange URI will automatically be visited for you.
@@ -129,41 +125,18 @@ namespace SpotifyAPI.Web.Auth
             }
         }
 
-        // By defining empty EventArgs objects, you can specify additional information later on as you see fit and it won't
-        // be considered a breaking change to consumers of this API.
-        //
-        // They don't even need to be constructed for their associated events to be invoked - just pass the static Empty property.
-        public class AccessTokenExpiredEventArgs : EventArgs
-        {
-            public static new AccessTokenExpiredEventArgs Empty { get; } = new AccessTokenExpiredEventArgs();
-        }
 
         /// <summary>
         /// When the authorization from Spotify expires. This will only occur if <see cref="AutoRefresh"/> is true.
         /// </summary>
         public event EventHandler<AccessTokenExpiredEventArgs> OnAccessTokenExpired;
 
-        public class AuthSuccessEventArgs : EventArgs
-        {
-            public static new AuthSuccessEventArgs Empty { get; } = new AuthSuccessEventArgs();
-        }
 
         /// <summary>
         /// When an authorization attempt succeeds and gains authorization.
         /// </summary>
         public event EventHandler<AuthSuccessEventArgs> OnAuthSuccess;
 
-        public class AuthFailureEventArgs : EventArgs
-        {
-            public static new AuthFailureEventArgs Empty { get; } = new AuthFailureEventArgs("");
-
-            public string Error { get; }
-
-            public AuthFailureEventArgs(string error)
-            {
-                Error = error;
-            }
-        }
 
         /// <summary>
         /// When an authorization attempt fails to gain authorization.
