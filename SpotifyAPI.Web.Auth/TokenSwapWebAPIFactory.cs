@@ -2,7 +2,6 @@
 using SpotifyAPI.Web.Models;
 using System;
 using System.Threading.Tasks;
-using System.Timers;
 
 namespace SpotifyAPI.Web.Auth
 {
@@ -12,14 +11,9 @@ namespace SpotifyAPI.Web.Auth
     public class TokenSwapWebAPIFactory
     {
         /// <summary>
-        /// Access provided by Spotify expires after 1 hour. If true, <see cref="TokenSwapAuth"/> will time the access tokens, and access will attempt to be silently (without opening a browser) refreshed automatically. This will not make <see cref="OnAccessTokenExpired"/> fire, see <see cref="TimeAccessExpiry"/> for that.
+        /// Access provided by Spotify expires after 1 hour. If true, <see cref="TokenSwapAuth"/> will time the access tokens, and access will attempt to be silently (without opening a browser) refreshed automatically.
         /// </summary>
         public bool AutoRefresh { get; set; }
-
-        /// <summary>
-        /// If true when calling <see cref="GetWebApiAsync"/>, will time how long it takes for access to Spotify to expire. The event <see cref="OnAccessTokenExpired"/> fires when the timer elapses.
-        /// </summary>
-        public bool TimeAccessExpiry { get; set; }
 
         /// <summary>
         /// The maximum time in seconds to wait for a SpotifyWebAPI to be returned. The timeout is cancelled early regardless if an auth success or failure occured.
@@ -62,6 +56,7 @@ namespace SpotifyAPI.Web.Auth
         private Token _lastToken;
         private SpotifyWebAPI _lastWebApi;
         private TokenSwapAuth _lastAuth;
+        private bool _currentlyAuthorizing;
 
         /// <summary>
         /// When the URI to get an authorization code is ready to be used to be visited. Not required if <see cref="OpenBrowser"/> is true as the exchange URI will automatically be visited for you.
@@ -101,14 +96,6 @@ namespace SpotifyAPI.Web.Auth
             ExchangeServerUri = exchangeServerUri;
             HostServerUri = hostServerUri;
             OpenBrowser = openBrowser;
-
-            OnAccessTokenExpired += async (sender, e) =>
-            {
-                if (AutoRefresh)
-                {
-                    await RefreshAuthAsync();
-                }
-            };
         }
 
         /// <summary>
@@ -138,116 +125,89 @@ namespace SpotifyAPI.Web.Auth
             }
         }
 
-
-        /// <summary>
-        /// Manually triggers the timeout for any ongoing get web API request.
-        /// </summary>
-        public void CancelGetWebApiRequest()
-        {
-            if (_webApiTimeoutTimer == null) return;
-
-            // The while loop in GetWebApiSync() will react and trigger the timeout.
-            _webApiTimeoutTimer.Stop();
-            _webApiTimeoutTimer.Dispose();
-            _webApiTimeoutTimer = null;
-        }
-
-        private Timer _webApiTimeoutTimer;
-
         /// <summary>
         /// Gets an authorized and ready to use SpotifyWebAPI by following the SecureAuthorizationCodeAuth process with its current settings.
         /// </summary>
         /// <returns></returns>
         public async Task<SpotifyWebAPI> GetWebApiAsync()
         {
-            return await Task<SpotifyWebAPI>.Factory.StartNew(() =>
+            _currentlyAuthorizing = true;
+
+            _lastAuth = new TokenSwapAuth(ExchangeServerUri, HostServerUri, Scope, HtmlResponse)
             {
-                bool currentlyAuthorizing = true;
+                ShowDialog = ShowDialog,
+                MaxGetTokenRetries = MaxGetTokenRetries,
+                TimeAccessExpiry = true
+            };
 
-                // Cancel any ongoing get web API requests
-                CancelGetWebApiRequest();
+            _lastAuth.Start();
 
-                _lastAuth = new TokenSwapAuth(
-                    exchangeServerUri: ExchangeServerUri,
-                    serverUri: HostServerUri,
-                    scope: Scope,
-                    htmlResponse: HtmlResponse)
+            _lastAuth.AuthReceived += OnAuthReceived;
+            _lastAuth.OnAccessTokenExpired += async (sender, e) =>
+            {
+                OnAccessTokenExpired?.Invoke(sender, AccessTokenExpiredEventArgs.Empty);
+
+                if (AutoRefresh)
                 {
-                    ShowDialog = ShowDialog,
-                    MaxGetTokenRetries = MaxGetTokenRetries,
-                    TimeAccessExpiry = AutoRefresh || TimeAccessExpiry
-                };
-                _lastAuth.AuthReceived += (_, response) =>
-                {
-                    if (!string.IsNullOrEmpty(response.Error))
-                    {
-                        // We only want one auth failure to be fired, if the request timed out then don't bother.
-                        if (!_webApiTimeoutTimer.Enabled) return;
-
-                        OnAuthFailure?.Invoke(this, new AuthFailureEventArgs(response.Error));
-                        currentlyAuthorizing = false;
-                        return;
-                    }
-
-                    _lastToken = response;
-
-                    if (string.IsNullOrEmpty(_lastToken?.AccessToken) || _lastToken.HasError())
-                    {
-                        // We only want one auth failure to be fired, if the request timed out then don't bother.
-                        if (!_webApiTimeoutTimer.Enabled) return;
-
-                        OnAuthFailure?.Invoke(this, new AuthFailureEventArgs("Exchange token not returned by server."));
-                        currentlyAuthorizing = false;
-                        return;
-                    }
-
-                    _lastWebApi?.Dispose();
-                    _lastWebApi = new SpotifyWebAPI()
-                    {
-                        Token = _lastToken
-                    };
-
-                    _lastAuth.Stop();
-
-                    OnAuthSuccess?.Invoke(this, AuthSuccessEventArgs.Empty);
-                    currentlyAuthorizing = false;
-                };
-                _lastAuth.OnAccessTokenExpired += async (sender, e) =>
-                {
-                    if (TimeAccessExpiry)
-                    {
-                        OnAccessTokenExpired?.Invoke(sender, AccessTokenExpiredEventArgs.Empty);
-                    }
-
-                    if (AutoRefresh)
-                    {
-                        await RefreshAuthAsync();
-                    }
-                };
-                _lastAuth.Start();
-                OnExchangeReady?.Invoke(this, new ExchangeReadyEventArgs { ExchangeUri = _lastAuth.GetUri() });
-                if (OpenBrowser)
-                {
-                    _lastAuth.OpenBrowser();
+                    await RefreshAuthAsync();
                 }
+            };
 
-                _webApiTimeoutTimer = new System.Timers.Timer
-                {
-                    AutoReset = false,
-                    Enabled = true,
-                    Interval = Timeout * 1000
-                };
+            OnExchangeReady?.Invoke(this, new ExchangeReadyEventArgs { ExchangeUri = _lastAuth.GetUri() });
 
-                while (currentlyAuthorizing && _webApiTimeoutTimer.Enabled) ;
+            if (OpenBrowser)
+            {
+                _lastAuth.OpenBrowser();
+            }
 
-                // If a timeout occurred
-                if (_lastWebApi == null && currentlyAuthorizing)
-                {
-                    OnAuthFailure?.Invoke(this, new AuthFailureEventArgs("Authorization request has timed out."));
-                }
+            var stateTask = Task.Run(() => { while (_currentlyAuthorizing) ; });
+            var timeoutTask = Task.Delay(Timeout * 1000);
 
-                return _lastWebApi;
-            });
+            var result = await Task.WhenAny(stateTask, timeoutTask);
+
+            // If a timeout occurred
+            if (result == timeoutTask)
+            {
+                OnAuthFailure?.Invoke(this, new AuthFailureEventArgs("Authorization request has timed out."));
+                _currentlyAuthorizing = false;
+            }
+
+            return _lastWebApi;
+        }
+
+        private void OnAuthReceived(object sender, Token token)
+        {
+            //We have (most likely) timed out, abort
+            if (!_currentlyAuthorizing)
+            {
+                return;
+            }
+
+            if (string.IsNullOrEmpty(token?.AccessToken))
+            {
+                OnAuthFailure?.Invoke(this, new AuthFailureEventArgs("Exchange token not returned by server."));
+                _currentlyAuthorizing = false;
+                return;
+            }
+
+            if (token.HasError())
+            {
+                OnAuthFailure?.Invoke(this, new AuthFailureEventArgs(token.Error));
+                _currentlyAuthorizing = false;
+                return;
+            }
+
+            _lastToken = token;
+            _lastWebApi?.Dispose();
+            _lastWebApi = new SpotifyWebAPI()
+            {
+                Token = _lastToken
+            };
+
+            _lastAuth.Stop();
+
+            OnAuthSuccess?.Invoke(this, AuthSuccessEventArgs.Empty);
+            _currentlyAuthorizing = false;
         }
     }
 }
