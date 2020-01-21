@@ -122,6 +122,8 @@ namespace SpotifyAPI.Web.Auth
 
             if (!string.IsNullOrEmpty(token?.AccessToken) && !token.HasError())
             {
+                SetAccessExpireTimer(token);
+
                 return token;
             }
 
@@ -167,32 +169,14 @@ namespace SpotifyAPI.Web.Auth
         /// Uses the authorization code to silently (doesn't open a browser) obtain both an access token and refresh token, where the refresh token would be required for you to use <see cref="RefreshAuthAsync(string)"/>.
         /// </summary>
         /// <param name="authorizationCode"></param>
-        /// <returns></returns>
-        public async Task<Token> ExchangeCodeAsync(string authorizationCode)
-        {
-            Token token = await GetToken("authorization_code", "/authorize", authorizationCode);
-            if (token != null && !token.HasError() && !string.IsNullOrEmpty(token.AccessToken))
-            {
-                SetAccessExpireTimer(token);
-            }
-
-            return token;
-        }
+        internal async Task<Token> ExchangeCodeAsync(string authorizationCode)
+            => await GetToken("authorization_code", "/authorize", authorizationCode);
 
         /// <summary>
         /// Uses the refresh token to silently (doesn't open a browser) obtain a fresh access token, no refresh token is given however (as it does not change).
         /// </summary>
         /// <param name="refreshToken"></param>
-        /// <returns></returns>
         public async Task<Token> RefreshAuthAsync(string refreshToken)
-        {
-            Token token = await GetToken("refresh_token", "/refresh", refreshToken: refreshToken);
-            if (token != null && !token.HasError() && !string.IsNullOrEmpty(token.AccessToken))
-            {
-                SetAccessExpireTimer(token);
-            }
-
-            return token;
-        }
+            => await GetToken("refresh_token", "/refresh", refreshToken: refreshToken);
     }
 }
