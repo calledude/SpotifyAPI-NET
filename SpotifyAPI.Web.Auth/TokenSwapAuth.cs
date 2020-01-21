@@ -103,21 +103,15 @@ namespace SpotifyAPI.Web.Auth
 
             FormUrlEncodedContent content = new FormUrlEncodedContent(parameters);
 
-            try
-            {
-                HttpClientHandler handler = ProxyConfig.CreateClientHandler(ProxyConfig);
-                HttpClient client = new HttpClient(handler);
-                HttpResponseMessage siteResponse = await client.PostAsync(_exchangeServerUri + endpoint, content);
+            HttpClientHandler handler = ProxyConfig.CreateClientHandler(ProxyConfig);
+            HttpClient client = new HttpClient(handler);
+            HttpResponseMessage siteResponse = await client.PostAsync(_exchangeServerUri + endpoint, content);
 
-                Token token = JsonConvert.DeserializeObject<Token>(await siteResponse.Content.ReadAsStringAsync());
-                // Don't need to check if it was null - if it is, it will resort to the catch block.
-                if (!token.HasError() && !string.IsNullOrEmpty(token.AccessToken))
-                {
-                    return token;
-                }
-            }
-            catch
+            Token token = JsonConvert.DeserializeObject<Token>(await siteResponse.Content.ReadAsStringAsync());
+
+            if (!string.IsNullOrEmpty(token?.AccessToken) && !token.HasError())
             {
+                return token;
             }
 
             if (currentRetries >= MaxGetTokenRetries)
