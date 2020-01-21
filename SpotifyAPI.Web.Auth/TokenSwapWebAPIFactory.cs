@@ -59,6 +59,31 @@ namespace SpotifyAPI.Web.Auth
         /// </summary>
         public int MaxGetTokenRetries { get; set; } = 10;
 
+        private Token _lastToken;
+        private SpotifyWebAPI _lastWebApi;
+        private TokenSwapAuth _lastAuth;
+
+        /// <summary>
+        /// When the URI to get an authorization code is ready to be used to be visited. Not required if <see cref="OpenBrowser"/> is true as the exchange URI will automatically be visited for you.
+        /// </summary>
+        public event EventHandler<ExchangeReadyEventArgs> OnExchangeReady;
+        public event EventHandler<AuthSuccessEventArgs> OnTokenRefreshSuccess;
+
+        /// <summary>
+        /// When an authorization attempt fails to gain authorization.
+        /// </summary>
+        public event EventHandler<AuthFailureEventArgs> OnAuthFailure;
+
+        /// <summary>
+        /// When the authorization from Spotify expires. This will only occur if <see cref="AutoRefresh"/> is true.
+        /// </summary>
+        public event EventHandler<AccessTokenExpiredEventArgs> OnAccessTokenExpired;
+
+        /// <summary>
+        /// When an authorization attempt succeeds and gains authorization.
+        /// </summary>
+        public event EventHandler<AuthSuccessEventArgs> OnAuthSuccess;
+
         /// <summary>
         /// Returns a SpotifyWebAPI using the TokenSwapAuth process.
         /// </summary>
@@ -85,18 +110,6 @@ namespace SpotifyAPI.Web.Auth
                 }
             };
         }
-
-        private Token _lastToken;
-        private SpotifyWebAPI _lastWebApi;
-        private TokenSwapAuth _lastAuth;
-
-
-        /// <summary>
-        /// When the URI to get an authorization code is ready to be used to be visited. Not required if <see cref="OpenBrowser"/> is true as the exchange URI will automatically be visited for you.
-        /// </summary>
-        public event EventHandler<ExchangeReadyEventArgs> OnExchangeReady;
-
-        public event EventHandler<AuthSuccessEventArgs> OnTokenRefreshSuccess;
 
         /// <summary>
         /// Refreshes the access for a SpotifyWebAPI returned by this factory.
@@ -125,23 +138,6 @@ namespace SpotifyAPI.Web.Auth
             }
         }
 
-
-        /// <summary>
-        /// When the authorization from Spotify expires. This will only occur if <see cref="AutoRefresh"/> is true.
-        /// </summary>
-        public event EventHandler<AccessTokenExpiredEventArgs> OnAccessTokenExpired;
-
-
-        /// <summary>
-        /// When an authorization attempt succeeds and gains authorization.
-        /// </summary>
-        public event EventHandler<AuthSuccessEventArgs> OnAuthSuccess;
-
-
-        /// <summary>
-        /// When an authorization attempt fails to gain authorization.
-        /// </summary>
-        public event EventHandler<AuthFailureEventArgs> OnAuthFailure;
 
         /// <summary>
         /// Manually triggers the timeout for any ongoing get web API request.
