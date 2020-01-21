@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Unosquare.Labs.EmbedIO;
 using Unosquare.Labs.EmbedIO.Constants;
 using Unosquare.Labs.EmbedIO.Modules;
+using System.Timers;
 
 namespace SpotifyAPI.Web.Auth
 {
@@ -22,12 +23,22 @@ namespace SpotifyAPI.Web.Auth
     /// </summary>
     public class TokenSwapAuth : SpotifyAuthServer<AuthorizationCode>
     {
-        readonly string _exchangeServerUri;
+        private readonly string _exchangeServerUri;
+        private Timer _accessTokenExpireTimer;
+        private string _htmlResponse = "<script>window.close();</script>";
 
         /// <summary>
         /// The HTML to respond with when the callback server (serverUri) is reached. The default value will close the window on arrival.
         /// </summary>
-        public string HtmlResponse { get; set; } = "<script>window.close();</script>";
+        public string HtmlResponse
+        {
+            get => _htmlResponse;
+            set
+            {
+                if (!string.IsNullOrEmpty(value))
+                    _htmlResponse = value;
+            }
+        }
 
         /// <summary>
         /// If true, will time how long it takes for access to expire. On expiry, the <see cref="OnAccessTokenExpired"/> event fires.
@@ -39,16 +50,12 @@ namespace SpotifyAPI.Web.Auth
         /// <param name="exchangeServerUri">The URI to an exchange server that will perform the key exchange.</param>
         /// <param name="serverUri">The URI to host the server at that your exchange server should return the authorization code to by GET request. (e.g. http://localhost:4002)</param>
         /// <param name="scope"></param>
-        /// <param name="state">Stating none will randomly generate a state parameter.</param>
         /// <param name="htmlResponse">The HTML to respond with when the callback server (serverUri) is reached. The default value will close the window on arrival.</param>
-        public TokenSwapAuth(string exchangeServerUri, string serverUri, Scope scope = Scope.None, string state = "",
-            string htmlResponse = "") : base("code", "", "", serverUri, scope, state)
+        /// <param name="state">Stating none will randomly generate a state parameter.</param>
+        public TokenSwapAuth(string exchangeServerUri, string serverUri, Scope scope = Scope.None, string htmlResponse = "",
+            string state = "") : base("code", "", "", serverUri, scope, state)
         {
-            if (!string.IsNullOrEmpty(htmlResponse))
-            {
-                HtmlResponse = htmlResponse;
-            }
-
+            HtmlResponse = htmlResponse;
             _exchangeServerUri = exchangeServerUri;
         }
 
@@ -129,8 +136,6 @@ namespace SpotifyAPI.Web.Auth
             }
         }
 
-        System.Timers.Timer _accessTokenExpireTimer;
-
         /// <summary>
         /// When Spotify authorization has expired. Will only trigger if <see cref="TimeAccessExpiry"/> is true.
         /// </summary>
@@ -142,15 +147,15 @@ namespace SpotifyAPI.Web.Auth
         /// <param name="token"></param>
         void SetAccessExpireTimer(Token token)
         {
-            if (!TimeAccessExpiry) return;
-
             if (_accessTokenExpireTimer != null)
             {
                 _accessTokenExpireTimer.Stop();
                 _accessTokenExpireTimer.Dispose();
             }
 
-            _accessTokenExpireTimer = new System.Timers.Timer
+            if (!TimeAccessExpiry) return;
+
+            _accessTokenExpireTimer = new Timer
             {
                 Enabled = true,
                 Interval = token.ExpiresIn * 1000,
