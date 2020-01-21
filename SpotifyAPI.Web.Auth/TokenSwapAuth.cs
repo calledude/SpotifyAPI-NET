@@ -47,6 +47,18 @@ namespace SpotifyAPI.Web.Auth
 
         public ProxyConfig ProxyConfig { get; set; }
 
+        /// <summary>
+        /// The maximum amount of times to retry getting a token.
+        /// <para/>
+        /// A token get is attempted every time you <see cref="RefreshAuthAsync(string)"/> and <see cref="ExchangeCodeAsync(string)"/>.
+        /// </summary>
+        public int MaxGetTokenRetries { get; set; } = 10;
+
+        /// <summary>
+        /// When Spotify authorization has expired. Will only trigger if <see cref="TimeAccessExpiry"/> is true.
+        /// </summary>
+        public event EventHandler OnAccessTokenExpired;
+
         /// <param name="exchangeServerUri">The URI to an exchange server that will perform the key exchange.</param>
         /// <param name="serverUri">The URI to host the server at that your exchange server should return the authorization code to by GET request. (e.g. http://localhost:4002)</param>
         /// <param name="scope"></param>
@@ -76,14 +88,7 @@ namespace SpotifyAPI.Web.Auth
         }
 
         /// <summary>
-        /// The maximum amount of times to retry getting a token.
-        /// <para/>
-        /// A token get is attempted every time you <see cref="RefreshAuthAsync(string)"/> and <see cref="ExchangeCodeAsync(string)"/>.
-        /// </summary>
-        public int MaxGetTokenRetries { get; set; } = 10;
-
-        /// <summary>
-        /// Creates a HTTP request to obtain a token object.<para/>
+        /// Creates a HTTP request to obtain a token object.
         /// Parameter grantType can only be "refresh_token" or "authorization_code". authorizationCode and refreshToken are not mandatory, but at least one must be provided for your desired grant_type request otherwise an invalid response will be given and an exception is likely to be thrown.
         /// <para>
         /// Will re-attempt on error, on null or on no access token <see cref="MaxGetTokenRetries"/> times before finally returning null.
@@ -135,11 +140,6 @@ namespace SpotifyAPI.Web.Auth
                 return await GetToken(grantType, endpoint, authorizationCode, refreshToken, currentRetries);
             }
         }
-
-        /// <summary>
-        /// When Spotify authorization has expired. Will only trigger if <see cref="TimeAccessExpiry"/> is true.
-        /// </summary>
-        public event EventHandler OnAccessTokenExpired;
 
         /// <summary>
         /// If <see cref="TimeAccessExpiry"/> is true, sets a timer for how long access will take to expire.
