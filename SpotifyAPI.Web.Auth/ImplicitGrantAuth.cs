@@ -1,9 +1,7 @@
+using EmbedIO.WebApi;
+using SpotifyAPI.Web.Auth.Controllers;
 using SpotifyAPI.Web.Enums;
 using SpotifyAPI.Web.Models;
-using System.Threading.Tasks;
-using Unosquare.Labs.EmbedIO;
-using Unosquare.Labs.EmbedIO.Constants;
-using Unosquare.Labs.EmbedIO.Modules;
 
 namespace SpotifyAPI.Web.Auth
 {
@@ -19,51 +17,9 @@ namespace SpotifyAPI.Web.Auth
             ClientId = clientId;
         }
 
-        protected override void AdaptWebServer(WebServer webServer)
+        protected override void AdaptModule(WebApiModule webApiModule)
         {
-            webServer.Module<WebApiModule>().RegisterController<ImplicitGrantAuthController>();
-        }
-    }
-
-    public class ImplicitGrantAuthController : WebApiController
-    {
-        [WebApiHandler(HttpVerbs.Get, "/auth")]
-        public Task<bool> GetAuth()
-        {
-            string state = Request.QueryString["state"];
-            SpotifyAuthServer<Token> auth = ImplicitGrantAuth.GetByState(state);
-            if (auth == null)
-                return HttpContext.StringResponseAsync(
-                    $"Failed - Unable to find auth request with state \"{state}\" - Please retry");
-
-            Token token;
-            string error = Request.QueryString["error"];
-            if (error == null)
-            {
-                string accessToken = Request.QueryString["access_token"];
-                string tokenType = Request.QueryString["token_type"];
-                string expiresIn = Request.QueryString["expires_in"];
-                token = new Token
-                {
-                    AccessToken = accessToken,
-                    ExpiresIn = double.Parse(expiresIn),
-                    TokenType = tokenType
-                };
-            }
-            else
-            {
-                token = new Token
-                {
-                    Error = error
-                };
-            }
-
-            Task.Factory.StartNew(() => auth.TriggerAuth(token));
-            return HttpContext.HtmlResponseAsync("<script>window.close()</script>");
-        }
-
-        public ImplicitGrantAuthController(IHttpContext context) : base(context)
-        {
+            webApiModule.RegisterController<ImplicitGrantAuthController>();
         }
     }
 }

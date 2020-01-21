@@ -1,4 +1,6 @@
-﻿using Newtonsoft.Json;
+﻿using EmbedIO.WebApi;
+using Newtonsoft.Json;
+using SpotifyAPI.Web.Auth.Controllers;
 using SpotifyAPI.Web.Enums;
 using SpotifyAPI.Web.Models;
 using System;
@@ -6,9 +8,6 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using Unosquare.Labs.EmbedIO;
-using Unosquare.Labs.EmbedIO.Constants;
-using Unosquare.Labs.EmbedIO.Modules;
 using System.Timers;
 
 namespace SpotifyAPI.Web.Auth
@@ -21,7 +20,7 @@ namespace SpotifyAPI.Web.Auth
     /// It's recommended that you use <see cref="TokenSwapWebAPIFactory"/> if you would like to use the TokenSwap method.
     /// </para>
     /// </summary>
-    public class TokenSwapAuth : SpotifyAuthServer<AuthorizationCode>
+    public class TokenSwapAuth : SpotifyAuthServer<AuthorizationCodeResponse>
     {
         private readonly string _exchangeServerUri;
         private Timer _accessTokenExpireTimer;
@@ -71,9 +70,9 @@ namespace SpotifyAPI.Web.Auth
             _exchangeServerUri = exchangeServerUri;
         }
 
-        protected override void AdaptWebServer(WebServer webServer)
+        protected override void AdaptModule(WebApiModule webApiModule)
         {
-            webServer.Module<WebApiModule>().RegisterController<TokenSwapAuthController>();
+            webApiModule.RegisterController<TokenSwapAuthController>();
         }
 
         public override string GetUri()
@@ -194,38 +193,6 @@ namespace SpotifyAPI.Web.Auth
             }
 
             return token;
-        }
-    }
-
-    internal class TokenSwapAuthController : WebApiController
-    {
-        public TokenSwapAuthController(IHttpContext context) : base(context)
-        {
-        }
-
-        [WebApiHandler(HttpVerbs.Get, "/auth")]
-        public Task<bool> GetAuth()
-        {
-            string state = Request.QueryString["state"];
-            SpotifyAuthServer<AuthorizationCode> auth = TokenSwapAuth.GetByState(state);
-
-            string code = null;
-            string error = Request.QueryString["error"];
-            if (error == null)
-            {
-                code = Request.QueryString["code"];
-            }
-
-            AuthorizationCode authcode = new AuthorizationCode
-            {
-                Code = code,
-                Error = error
-            };
-
-            TokenSwapAuth au = (TokenSwapAuth)auth;
-
-            Task.Factory.StartNew(async () => auth?.TriggerAuth(await au.ExchangeCodeAsync(authcode.Code)));
-            return HttpContext.HtmlResponseAsync(au.HtmlResponse);
         }
     }
 }

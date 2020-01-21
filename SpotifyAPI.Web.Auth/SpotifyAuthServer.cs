@@ -1,13 +1,13 @@
-﻿using SpotifyAPI.Web.Enums;
+﻿using EmbedIO;
+using EmbedIO.WebApi;
+using SpotifyAPI.Web.Enums;
+using Swan.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading;
-using Unosquare.Labs.EmbedIO;
-using Unosquare.Labs.EmbedIO.Modules;
-using Unosquare.Swan;
 
 namespace SpotifyAPI.Web.Auth
 {
@@ -16,7 +16,7 @@ namespace SpotifyAPI.Web.Auth
         private readonly string _folder;
         private readonly string _type;
         private WebServer _server;
-        protected CancellationTokenSource _serverSource;
+        private CancellationTokenSource _serverSource;
 
         internal static readonly Dictionary<string, SpotifyAuthServer<T>> Instances = new Dictionary<string, SpotifyAuthServer<T>>();
 
@@ -32,14 +32,16 @@ namespace SpotifyAPI.Web.Auth
 
         public override void Start()
         {
-            Terminal.Settings.DisplayLoggingMessageType = LogMessageType.None;
+            Logger.NoLogging();
             Instances.Add(State, this);
             _serverSource = new CancellationTokenSource();
 
-            _server = WebServer.Create(ServerUri);
-            _server.RegisterModule(new WebApiModule());
-            AdaptWebServer(_server);
-            _server.RegisterModule(new ResourceFilesModule(Assembly.GetExecutingAssembly(), $"SpotifyAPI.Web.Auth.Resources.{_folder}"));
+            _server = new WebServer(ServerUri);
+            var webApiModule = new WebApiModule("/");
+            _server.WithModule(webApiModule);
+            AdaptModule(webApiModule);
+            _server.WithEmbeddedResources("/", Assembly.GetExecutingAssembly(), $"SpotifyAPI.Web.Auth.Resources.{_folder}");
+
             _ = _server.RunAsync(_serverSource.Token);
         }
 
@@ -73,6 +75,6 @@ namespace SpotifyAPI.Web.Auth
             return Instances.TryGetValue(state, out SpotifyAuthServer<T> auth) ? auth : null;
         }
 
-        protected abstract void AdaptWebServer(WebServer webServer);
+        protected abstract void AdaptModule(WebApiModule webApiModule);
     }
 }
