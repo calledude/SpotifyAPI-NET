@@ -41,7 +41,7 @@ namespace SpotifyAPI.Web.Models
 
         public bool HasError()
         {
-            return Error != null;
+            return !string.IsNullOrEmpty(Error);
         }
     }
 }

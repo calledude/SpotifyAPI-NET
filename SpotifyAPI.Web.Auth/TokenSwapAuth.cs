@@ -99,7 +99,7 @@ namespace SpotifyAPI.Web.Auth
         /// <param name="refreshToken">This needs to be defined if "grantType" is "refresh_token".</param>
         /// <param name="currentRetries">Does not need to be defined. Used internally for retry attempt recursion.</param>
         /// <returns>Attempts to return a full <see cref="Token"/>, but after retry attempts, may return a <see cref="Token"/> with no <see cref="Token.AccessToken"/>, or null.</returns>
-        async Task<Token> GetToken(string grantType, string endpoint, string authorizationCode = "", string refreshToken = "",
+        private async Task<Token> GetToken(string grantType, string endpoint, string authorizationCode = "", string refreshToken = "",
             int currentRetries = 0)
         {
             var parameters = new Dictionary<string, string>()
@@ -146,7 +146,7 @@ namespace SpotifyAPI.Web.Auth
         /// If <see cref="TimeAccessExpiry"/> is true, sets a timer for how long access will take to expire.
         /// </summary>
         /// <param name="token"></param>
-        void SetAccessExpireTimer(Token token)
+        private void SetAccessExpireTimer(Token token)
         {
             if (_accessTokenExpireTimer != null)
             {

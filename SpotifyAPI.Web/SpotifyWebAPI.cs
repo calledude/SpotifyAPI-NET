@@ -53,7 +53,7 @@ namespace SpotifyAPI.Web
         public Token Token { get; set; }
 
         /// <summary>
-        ///     If true, an authorization header based on <see cref="TokenType"/> and <see cref="AccessToken"/> will be used
+        ///     If true, an authorization header based on <see cref="Token.TokenType"/> and <see cref="Token.AccessToken"/> will be used
         /// </summary>
         public bool UseAuth { get; set; }
 
@@ -61,7 +61,6 @@ namespace SpotifyAPI.Web
         ///     A custom WebClient, used for Unit-Testing
         /// </summary>
         public IClient WebClient { get; set; }
-
 
         /// <summary>
         ///     Specifies after how many miliseconds should a failed request be retried.
@@ -372,7 +371,7 @@ namespace SpotifyAPI.Web
         /// <param name="limit">The maximum number of items to return. Default: 20. Minimum: 1. Maximum: 50.</param>
         /// <param name="offset">The index of the first item to return. Default: 0</param>
         /// <remarks>AUTH NEEDED</remarks>
-        public FeaturedPlaylists GetFeaturedPlaylists(string locale = "", string country = "", DateTime timestamp = default(DateTime), int limit = 20, int offset = 0)
+        public FeaturedPlaylists GetFeaturedPlaylists(string locale = "", string country = "", DateTime timestamp = default, int limit = 20, int offset = 0)
         {
             if (!UseAuth)
                 throw new InvalidOperationException("Auth is required for GetFeaturedPlaylists");
@@ -391,7 +390,7 @@ namespace SpotifyAPI.Web
         /// <param name="limit">The maximum number of items to return. Default: 20. Minimum: 1. Maximum: 50.</param>
         /// <param name="offset">The index of the first item to return. Default: 0</param>
         /// <remarks>AUTH NEEDED</remarks>
-        public Task<FeaturedPlaylists> GetFeaturedPlaylistsAsync(string locale = "", string country = "", DateTime timestamp = default(DateTime), int limit = 20, int offset = 0)
+        public Task<FeaturedPlaylists> GetFeaturedPlaylistsAsync(string locale = "", string country = "", DateTime timestamp = default, int limit = 20, int offset = 0)
         {
             if (!UseAuth)
                 throw new InvalidOperationException("Auth is required for GetFeaturedPlaylists");
@@ -2000,7 +1999,6 @@ namespace SpotifyAPI.Web
             return AddPlaylistTracks(playlistId, new List<string> { uri }, position);
         }
 
-
         /// <summary>
         ///     Add a track to a user’s playlist.
         /// </summary>
@@ -2442,11 +2440,11 @@ namespace SpotifyAPI.Web
             int? offset = null, int positionMs = 0)
         {
             JObject ob = new JObject();
-            if(!string.IsNullOrEmpty(contextUri))
+            if (!string.IsNullOrEmpty(contextUri))
                 ob.Add("context_uri", contextUri);
-            if(uris != null)
+            if (uris != null)
                 ob.Add("uris", new JArray(uris));
-            if(offset != null)
+            if (offset != null)
                 ob.Add("offset", new JObject { { "position", offset } });
             if (positionMs > 0)
                 ob.Add("position_ms", positionMs);
@@ -2497,7 +2495,7 @@ namespace SpotifyAPI.Web
             if (uris != null)
                 ob.Add("uris", new JArray(uris));
             if (!string.IsNullOrEmpty(offset))
-                ob.Add("offset", new JObject {{"uri", offset}});
+                ob.Add("offset", new JObject { { "uri", offset } });
             if (positionMs > 0)
                 ob.Add("position_ms", positionMs);
             return UploadData<ErrorResponse>(_builder.ResumePlayback(deviceId), ob.ToString(Formatting.None), "PUT");
@@ -2889,7 +2887,7 @@ namespace SpotifyAPI.Web
             Tuple<ResponseInfo, T> response = null;
             do
             {
-                if(response != null) { Thread.Sleep(RetryAfter); }
+                if (response != null) { Thread.Sleep(RetryAfter); }
                 response = DownloadDataAlt<T>(url);
 
                 response.Item2.AddResponseInfo(response.Item1);

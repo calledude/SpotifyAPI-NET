@@ -54,7 +54,8 @@ namespace SpotifyAPI.Web.Auth
             webApiModule.RegisterController<AuthorizationCodeAuthController>();
         }
 
-        private string GetAuthHeader() => $"Basic {Convert.ToBase64String(Encoding.UTF8.GetBytes(ClientId + ":" + SecretId))}";
+        private string GetAuthHeader()
+            => $"Basic {Convert.ToBase64String(Encoding.UTF8.GetBytes(ClientId + ":" + SecretId))}";
 
         public async Task<Token> RefreshToken(string refreshToken)
         {

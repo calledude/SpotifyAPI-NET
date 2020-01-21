@@ -1,10 +1,10 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using SpotifyAPI.Web.Models;
+using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
-using SpotifyAPI.Web.Models;
 
 namespace SpotifyAPI.Web.Auth
 {
@@ -13,7 +13,7 @@ namespace SpotifyAPI.Web.Auth
         public string ClientSecret { get; set; }
 
         public string ClientId { get; set; }
-        
+
         public ProxyConfig ProxyConfig { get; set; }
 
         public CredentialsAuth(string clientId, string clientSecret)
