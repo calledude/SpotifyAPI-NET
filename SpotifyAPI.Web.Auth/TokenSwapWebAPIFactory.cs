@@ -104,11 +104,11 @@ namespace SpotifyAPI.Web.Auth
         /// <returns></returns>
         public async Task RefreshAuthAsync()
         {
-            Token token = await _lastAuth.RefreshAuthAsync(_lastToken.RefreshToken);
+            var token = await _lastAuth.RefreshAuthAsync(_lastToken.RefreshToken);
 
             if (token == null)
             {
-                OnAuthFailure?.Invoke(this, new AuthFailureEventArgs($"Token not returned by server."));
+                OnAuthFailure?.Invoke(this, new AuthFailureEventArgs("Token not returned by server."));
             }
             else if (token.HasError())
             {

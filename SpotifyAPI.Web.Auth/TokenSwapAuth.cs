@@ -71,13 +71,11 @@ namespace SpotifyAPI.Web.Auth
         }
 
         protected override void AdaptModule(WebApiModule webApiModule)
-        {
-            webApiModule.RegisterController<TokenSwapAuthController>();
-        }
+            => webApiModule.RegisterController<TokenSwapAuthController>();
 
         public override string GetUri()
         {
-            StringBuilder builder = new StringBuilder(_exchangeServerUri + "/authorize");
+            var builder = new StringBuilder(_exchangeServerUri + "/authorize");
             builder.Append("?");
             builder.Append("response_type=code");
             builder.Append("&state=" + State);
@@ -112,32 +110,27 @@ namespace SpotifyAPI.Web.Auth
             else if (!string.IsNullOrEmpty(refreshToken))
                 parameters.Add("refresh_token", refreshToken);
 
-            FormUrlEncodedContent content = new FormUrlEncodedContent(parameters);
+            var content = new FormUrlEncodedContent(parameters);
 
-            HttpClientHandler handler = ProxyConfig.CreateClientHandler(ProxyConfig);
-            HttpClient client = new HttpClient(handler);
-            HttpResponseMessage siteResponse = await client.PostAsync(_exchangeServerUri + endpoint, content);
-
-            Token token = JsonConvert.DeserializeObject<Token>(await siteResponse.Content.ReadAsStringAsync());
-
-            if (!string.IsNullOrEmpty(token?.AccessToken) && !token.HasError())
+            try
             {
-                SetAccessExpireTimer(token);
+                var handler = ProxyConfig.CreateClientHandler(ProxyConfig);
+                var client = new HttpClient(handler);
+                var siteResponse = await client.PostAsync(_exchangeServerUri + endpoint, content);
+
+                var token = JsonConvert.DeserializeObject<Token>(await siteResponse.Content.ReadAsStringAsync());
+
+                if (!string.IsNullOrEmpty(token?.AccessToken) && !token.HasError())
+                {
+                    SetAccessExpireTimer(token);
+                }
 
                 return token;
             }
-
-            if (currentRetries >= MaxGetTokenRetries)
-            {
-                return null;
-            }
-            else
+            catch (HttpRequestException) when (currentRetries < MaxGetTokenRetries)
             {
                 currentRetries++;
                 await Task.Delay(125 * currentRetries);
-                // The reason I chose to implement the retries system this way is because a static or instance
-                // variable keeping track would inhibit parallelism i.e. using this function on multiple threads/tasks.
-                // It's not clear why someone would like to do that, but it's better to cater for all kinds of uses.
                 return await GetToken(grantType, endpoint, authorizationCode, refreshToken, currentRetries);
             }
         }
