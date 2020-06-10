@@ -1,6 +1,7 @@
 ﻿using SpotifyAPI.Web.Enums;
 using SpotifyAPI.Web.Models;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace SpotifyAPI.Web.Auth
@@ -49,14 +50,14 @@ namespace SpotifyAPI.Web.Auth
         /// <summary>
         /// The maximum amount of times to retry getting a token.
         /// <para/>
-        /// A token get is attempted every time you <see cref="GetWebApiAsync"/> and <see cref="RefreshAuthAsync"/>. Increasing this may improve how often these actions succeed - although it won't solve any underlying problems causing a get token failure.
+        /// A token get is attempted every time you <see cref="GetWebApi"/> and <see cref="RefreshAuthAsync"/>. Increasing this may improve how often these actions succeed - although it won't solve any underlying problems causing a get token failure.
         /// </summary>
         public int MaxGetTokenRetries { get; set; } = 10;
 
         private Token _lastToken;
         private SpotifyWebAPI _lastWebApi;
         private TokenSwapAuth _lastAuth;
-        private bool _currentlyAuthorizing;
+        private readonly AutoResetEvent _authWait;
 
         /// <summary>
         /// When the URI to get an authorization code is ready to be used to be visited. Not required if <see cref="OpenBrowser"/> is true as the exchange URI will automatically be visited for you.
@@ -96,6 +97,7 @@ namespace SpotifyAPI.Web.Auth
             ExchangeServerUri = exchangeServerUri;
             HostServerUri = hostServerUri;
             OpenBrowser = openBrowser;
+            _authWait = new AutoResetEvent(false);
         }
 
         /// <summary>
@@ -129,10 +131,8 @@ namespace SpotifyAPI.Web.Auth
         /// Gets an authorized and ready to use SpotifyWebAPI by following the SecureAuthorizationCodeAuth process with its current settings.
         /// </summary>
         /// <returns></returns>
-        public async Task<SpotifyWebAPI> GetWebApiAsync()
+        public SpotifyWebAPI GetWebApi()
         {
-            _currentlyAuthorizing = true;
-
             _lastAuth = new TokenSwapAuth(ExchangeServerUri, HostServerUri, Scope, HtmlResponse)
             {
                 ShowDialog = ShowDialog,
@@ -160,16 +160,9 @@ namespace SpotifyAPI.Web.Auth
                 _lastAuth.OpenBrowser();
             }
 
-            var stateTask = Task.Run(() => { while (_currentlyAuthorizing) ; });
-            var timeoutTask = Task.Delay(Timeout * 1000);
-
-            var result = await Task.WhenAny(stateTask, timeoutTask);
-
-            // If a timeout occurred
-            if (result == timeoutTask)
+            if (!_authWait.WaitOne(Timeout * 1000))
             {
                 OnAuthFailure?.Invoke(this, new AuthFailureEventArgs("Authorization request has timed out."));
-                _currentlyAuthorizing = false;
             }
 
             return _lastWebApi;
@@ -177,23 +170,17 @@ namespace SpotifyAPI.Web.Auth
 
         private void OnAuthReceived(object sender, Token token)
         {
-            //We have (most likely) timed out, abort
-            if (!_currentlyAuthorizing)
-            {
-                return;
-            }
+            _authWait.Set();
 
             if (string.IsNullOrEmpty(token?.AccessToken))
             {
                 OnAuthFailure?.Invoke(this, new AuthFailureEventArgs("Exchange token not returned by server."));
-                _currentlyAuthorizing = false;
                 return;
             }
 
             if (token.HasError())
             {
                 OnAuthFailure?.Invoke(this, new AuthFailureEventArgs(token.Error));
-                _currentlyAuthorizing = false;
                 return;
             }
 
@@ -207,7 +194,6 @@ namespace SpotifyAPI.Web.Auth
             _lastAuth.Stop();
 
             OnAuthSuccess?.Invoke(this, AuthSuccessEventArgs.Empty);
-            _currentlyAuthorizing = false;
         }
     }
 }
