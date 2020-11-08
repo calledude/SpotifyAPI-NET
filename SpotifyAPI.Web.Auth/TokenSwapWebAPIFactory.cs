@@ -170,8 +170,6 @@ namespace SpotifyAPI.Web.Auth
 
         private void OnAuthReceived(object sender, Token token)
         {
-            _authWait.Set();
-
             if (string.IsNullOrEmpty(token?.AccessToken))
             {
                 OnAuthFailure?.Invoke(this, new AuthFailureEventArgs("Exchange token not returned by server."));
@@ -194,6 +192,7 @@ namespace SpotifyAPI.Web.Auth
             _lastAuth.Stop();
 
             OnAuthSuccess?.Invoke(this, AuthSuccessEventArgs.Empty);
+            _authWait.Set();
         }
     }
 }
